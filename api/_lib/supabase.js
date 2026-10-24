@@ -3,13 +3,46 @@
 // ==============================================================================
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+function normalizeConfig(rawUrl, rawAnon, rawService) {
+  let url = (rawUrl || '').trim().replace(/^["']|["']$/g, '').trim();
+  let anon = (rawAnon || '').trim().replace(/^["']|["']$/g, '').trim();
+  let service = (rawService || '').trim().replace(/^["']|["']$/g, '').trim();
+
+  // Handle accidental swap of URL and Key
+  if (url.startsWith('eyJ') && (anon.startsWith('http') || anon.includes('.supabase.co'))) {
+    const temp = url;
+    url = anon;
+    anon = temp;
+  }
+
+  if (url) {
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://' + url;
+    }
+    try {
+      const parsed = new URL(url);
+      url = parsed.origin;
+    } catch (_) {
+      url = url.replace(/\/+(auth|rest)(\/v\d+)?\/?$/i, '').replace(/\/+$/, '');
+    }
+  }
+
+  return { url, anon, service };
+}
+
+const config = normalizeConfig(
+  process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL,
+  process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
+export const SUPABASE_URL = config.url;
+export const SUPABASE_ANON_KEY = config.anon;
+export const SUPABASE_SERVICE_KEY = config.service;
 
 export const hasSupabaseConfig = Boolean(SUPABASE_URL && (SUPABASE_SERVICE_KEY || SUPABASE_ANON_KEY));
 
-// Initialize standard Supabase client
+// Initialize standard Supabase client with cleaned URL
 export const supabase = hasSupabaseConfig
   ? createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY || SUPABASE_ANON_KEY, {
       auth: { persistSession: false },
