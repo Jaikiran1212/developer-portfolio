@@ -14,7 +14,7 @@ INSERT INTO public.profile (
     'jaikiranjp@gmail.com',
     '+91 9445187244',
     'Trichy / Coimbatore',
-    'https://drive.google.com/file/d/your-resume-id/view?usp=sharing',
+    'https://drive.google.com/file/d/1YQp_62YhIoTQBWrKt6myzLJA4oJjEzZv/view?usp=drive_link',
     'Cyber Geometric',
     'Alternating Contrast',
     '{
@@ -90,7 +90,7 @@ Team project from our Data Structures & Algorithms course visualizing Knuth''s D
 - **Playback Control:** Pause, step-forward, reset, and dynamic speed throttling.
 - **Constraint Representation:** Highlights row, column, and 3x3 box rule satisfactions.',
     ARRAY['JavaScript', 'HTML5', 'CSS3', 'C++ Solver Logic', 'Algorithm Visualization'],
-    'https://github.com/sivaadhithian/DLX-Sudoku-Constraint-Solver',
+    'https://github.com/Jaikiran1212/DLX-Sudoku-Constraint-Solver',
     '',
     '',
     true,
