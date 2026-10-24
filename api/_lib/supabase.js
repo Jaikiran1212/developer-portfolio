@@ -283,4 +283,6 @@ export const memoryStore = {
       created_at: new Date().toISOString(),
     },
   ],
+  devAdminPassword: null,
+  recoveryOtps: {},
 };

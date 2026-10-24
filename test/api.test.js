@@ -5,9 +5,16 @@ import contactHandler from '../api/contact.js';
 import authHandler from '../api/auth/[action].js';
 import cmsHandler from '../api/cms/[resource].js';
 
-// Route action wrappers for consolidated functions
 const loginHandler = (req, res) => {
   req.query = { action: 'login', ...req.query };
+  return authHandler(req, res);
+};
+const forgotPasswordHandler = (req, res) => {
+  req.query = { action: 'forgot-password', ...req.query };
+  return authHandler(req, res);
+};
+const verifyOtpHandler = (req, res) => {
+  req.query = { action: 'verify-otp', ...req.query };
   return authHandler(req, res);
 };
 const cmsProjectsHandler = (req, res) => {
@@ -152,3 +159,63 @@ test('Admin can fetch private messages but public cannot', async () => {
   assert.equal(adminCall.res.statusCode, 200);
   assert.equal(Array.isArray(adminCall.res.data.messages), true);
 });
+
+test('POST /api/auth/forgot-password generates OTP and sends recovery code', async () => {
+  const { req, res } = createMockReqRes({
+    method: 'POST',
+    body: { email: 'jaikiranjp@gmail.com' },
+  });
+  await forgotPasswordHandler(req, res);
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.data.success, true);
+  assert.equal(typeof res.data.devOtp, 'string');
+  assert.equal(res.data.devOtp.length, 6);
+});
+
+test('POST /api/auth/verify-otp validates code and resets password successfully', async () => {
+  // 1. Request OTP
+  const req1 = createMockReqRes({
+    method: 'POST',
+    body: { email: 'jaikiranjp@gmail.com' },
+  });
+  await forgotPasswordHandler(req1.req, req1.res);
+  const code = req1.res.data.devOtp;
+
+  // 2. Submit wrong OTP -> should fail
+  const badReq = createMockReqRes({
+    method: 'POST',
+    body: {
+      email: 'jaikiranjp@gmail.com',
+      otp: '000000',
+      newPassword: 'MyNewSecurePassword999!',
+    },
+  });
+  await verifyOtpHandler(badReq.req, badReq.res);
+  assert.equal(badReq.res.statusCode, 400);
+
+  // 3. Submit valid OTP -> should succeed
+  const goodReq = createMockReqRes({
+    method: 'POST',
+    body: {
+      email: 'jaikiranjp@gmail.com',
+      otp: code,
+      newPassword: 'MyNewSecurePassword999!',
+    },
+  });
+  await verifyOtpHandler(goodReq.req, goodReq.res);
+  assert.equal(goodReq.res.statusCode, 200);
+  assert.equal(goodReq.res.data.success, true);
+
+  // 4. Login with newly set password -> should succeed
+  const loginReq = createMockReqRes({
+    method: 'POST',
+    body: {
+      email: 'jaikiranjp@gmail.com',
+      password: 'MyNewSecurePassword999!',
+    },
+  });
+  await loginHandler(loginReq.req, loginReq.res);
+  assert.equal(loginReq.res.statusCode, 200);
+  assert.equal(loginReq.res.data.success, true);
+});
+

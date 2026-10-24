@@ -103,6 +103,20 @@ export const apiClient = {
     this.setToken(null);
   },
 
+  async forgotPassword(email) {
+    return this.request('/api/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  },
+
+  async verifyOtpAndResetPassword(email, otp, newPassword) {
+    return this.request('/api/auth/verify-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email, otp, newPassword }),
+    });
+  },
+
   // 3. CMS DASHBOARD & AUDIT
   async getDashboard() {
     return this.request('/api/cms/dashboard');

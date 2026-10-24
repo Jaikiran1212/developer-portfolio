@@ -54,7 +54,7 @@ export class AdminCMS {
     await this.renderCMS();
   }
 
-  renderLoginForm(errorMessage = '') {
+  renderLoginForm(errorMessage = '', successMessage = '') {
     const adm = $('#adm');
     adm.innerHTML = `
       <div class="am" style="max-width:440px;padding-top:14vh">
@@ -63,6 +63,14 @@ export class AdminCMS {
             <h2 style="font:800 1.8rem var(--d);margin:0 0 6px">Admin Sign In</h2>
             <p style="color:#94a3b8;font-size:0.88rem;margin:0">Secure Supabase Authentication</p>
           </div>
+
+          ${
+            successMessage
+              ? `<div style="background:rgba(16,185,129,0.15);border:1px solid #10b981;color:#10b981;padding:12px 14px;border-radius:4px;font-size:0.85rem;margin-bottom:18px">
+                  ✓ ${esc(successMessage)}
+                </div>`
+              : ''
+          }
 
           ${
             errorMessage
@@ -74,12 +82,17 @@ export class AdminCMS {
 
           <form id="cms-login-form">
             <label for="admin-email">Administrator Email</label>
-            <input id="admin-email" name="email" type="email" placeholder="jaikiranjp@gmail.com" required autofocus>
+            <input id="admin-email" name="email" type="email" placeholder="jaikiranjp@gmail.com" value="jaikiranjp@gmail.com" required autofocus>
 
-            <label for="admin-pass">Password</label>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;margin-bottom:6px">
+              <label for="admin-pass" style="margin:0">Password</label>
+              <button type="button" id="cms-forgot-link" style="background:none;border:none;color:#22d3ee;font-size:0.8rem;cursor:pointer;padding:0;text-decoration:underline">
+                Forgot password?
+              </button>
+            </div>
             <input id="admin-pass" name="password" type="password" placeholder="••••••••••••" required>
 
-            <button type="submit" class="btn primary" style="width:100%;margin-top:8px">
+            <button type="submit" class="btn primary" style="width:100%;margin-top:14px">
               Sign In to CMS
             </button>
 
@@ -94,6 +107,14 @@ export class AdminCMS {
         </div>
       </div>
     `;
+
+    const forgotBtn = $('#cms-forgot-link');
+    if (forgotBtn) {
+      forgotBtn.onclick = () => {
+        const email = $('#admin-email')?.value?.trim() || 'jaikiranjp@gmail.com';
+        this.renderForgotPasswordForm(email);
+      };
+    }
 
     $('#cms-login-form').onsubmit = async (ev) => {
       ev.preventDefault();
@@ -117,6 +138,167 @@ export class AdminCMS {
         btn.textContent = 'Sign In to CMS';
       }
     };
+  }
+
+  renderForgotPasswordForm(email = 'jaikiranjp@gmail.com', step = 1, devOtp = '', alertMsg = '', isError = false) {
+    const adm = $('#adm');
+
+    adm.innerHTML = `
+      <div class="am" style="max-width:460px;padding-top:12vh">
+        <div class="dash-card" style="border-color:#22d3ee;padding:32px 28px">
+          <div style="text-align:center;margin-bottom:22px">
+            <div style="display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:50%;background:rgba(34,211,238,0.12);border:1px solid #22d3ee;margin-bottom:12px;color:#22d3ee">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <h2 style="font:800 1.7rem var(--d);margin:0 0 6px">Reset Password</h2>
+            <p style="color:#94a3b8;font-size:0.86rem;margin:0">
+              ${step === 1 ? 'Verify your administrator identity via OTP code' : `Enter the 6-digit OTP code sent to <b>${esc(email)}</b>`}
+            </p>
+          </div>
+
+          ${
+            alertMsg
+              ? `<div style="background:${isError ? 'rgba(244,63,94,0.15)' : 'rgba(16,185,129,0.15)'};border:1px solid ${isError ? '#f43f5e' : '#10b981'};color:${isError ? '#fff' : '#10b981'};padding:12px 14px;border-radius:4px;font-size:0.85rem;margin-bottom:18px">
+                  ${isError ? '✕ ' : '✓ '}${esc(alertMsg)}
+                </div>`
+              : ''
+          }
+
+          ${
+            step === 1
+              ? `
+              <form id="cms-forgot-step1-form">
+                <label for="reset-email">Administrator Email</label>
+                <input id="reset-email" name="email" type="email" value="${esc(email)}" placeholder="jaikiranjp@gmail.com" required autofocus>
+
+                <button type="submit" class="btn primary" style="width:100%;margin-top:14px">
+                  Send Verification Code (OTP)
+                </button>
+
+                <div style="margin-top:16px;text-align:center">
+                  <button type="button" id="back-to-login-btn" class="btn" style="width:100%">
+                    Return to Sign In
+                  </button>
+                </div>
+              </form>
+              `
+              : `
+              <form id="cms-forgot-step2-form">
+                ${
+                  devOtp
+                    ? `<div style="background:rgba(34,211,238,0.12);border:1px dashed #22d3ee;color:#22d3ee;padding:10px 12px;border-radius:4px;font-size:0.82rem;margin-bottom:16px;text-align:center">
+                        <b>Verification Code:</b> <span style="font-family:var(--m);font-weight:700;font-size:1.1rem;letter-spacing:3px">${esc(devOtp)}</span>
+                      </div>`
+                    : ''
+                }
+
+                <label for="reset-otp">6-Digit Verification Code</label>
+                <input id="reset-otp" name="otp" type="text" maxlength="6" pattern="[0-9]{6}" placeholder="••••••" value="${esc(devOtp)}" style="text-align:center;font-size:1.25rem;font-weight:700;letter-spacing:6px;font-family:var(--m)" required autofocus>
+
+                <label for="reset-pass" style="margin-top:12px">New Password (minimum 8 characters)</label>
+                <input id="reset-pass" name="password" type="password" minlength="8" placeholder="••••••••••••" required>
+
+                <label for="reset-pass-confirm" style="margin-top:12px">Confirm New Password</label>
+                <input id="reset-pass-confirm" name="password_confirm" type="password" minlength="8" placeholder="••••••••••••" required>
+
+                <button type="submit" class="btn primary" style="width:100%;margin-top:16px">
+                  Set New Password & Sign In
+                </button>
+
+                <div style="display:flex;gap:10px;margin-top:14px">
+                  <button type="button" id="resend-otp-btn" class="btn" style="flex:1;font-size:0.8rem">
+                    Resend Code
+                  </button>
+                  <button type="button" id="back-to-login-btn2" class="btn" style="flex:1;font-size:0.8rem">
+                    Cancel
+                  </button>
+                </div>
+              </form>
+              `
+          }
+
+          <div style="margin-top:20px;border-top:1px solid #1e293b;padding-top:14px;font-size:0.78rem;color:#94a3b8;line-height:1.5">
+            <b>Note:</b> A verification code is sent directly to your email inbox. Once verified, your password will be updated and you can log in immediately.
+          </div>
+        </div>
+      </div>
+    `;
+
+    if (step === 1) {
+      const backBtn = $('#back-to-login-btn');
+      if (backBtn) backBtn.onclick = () => this.renderLoginForm();
+
+      const f1 = $('#cms-forgot-step1-form');
+      if (f1) {
+        f1.onsubmit = async (ev) => {
+          ev.preventDefault();
+          const mail = $('#reset-email').value.trim();
+          const btn = ev.target.querySelector('button[type="submit"]');
+
+          try {
+            btn.disabled = true;
+            btn.textContent = 'Dispatching Code...';
+
+            const res = await apiClient.forgotPassword(mail);
+            this.renderForgotPasswordForm(mail, 2, res.devOtp || '', res.message || 'Verification code sent to your email.');
+          } catch (err) {
+            btn.disabled = false;
+            btn.textContent = 'Send Verification Code (OTP)';
+            this.renderForgotPasswordForm(mail, 1, '', err.message || 'Failed to dispatch verification code.', true);
+          }
+        };
+      }
+    } else {
+      const backBtn2 = $('#back-to-login-btn2');
+      if (backBtn2) backBtn2.onclick = () => this.renderLoginForm();
+
+      const resendBtn = $('#resend-otp-btn');
+      if (resendBtn) {
+        resendBtn.onclick = async (ev) => {
+          const btn = ev.target;
+          btn.disabled = true;
+          btn.textContent = 'Sending...';
+          try {
+            const res = await apiClient.forgotPassword(email);
+            this.renderForgotPasswordForm(email, 2, res.devOtp || '', 'A new verification code has been dispatched.');
+          } catch (err) {
+            btn.disabled = false;
+            btn.textContent = 'Resend Code';
+            this.renderForgotPasswordForm(email, 2, devOtp, err.message || 'Failed to resend code.', true);
+          }
+        };
+      }
+
+      const f2 = $('#cms-forgot-step2-form');
+      if (f2) {
+        f2.onsubmit = async (ev) => {
+          ev.preventDefault();
+          const form = ev.target;
+          const otp = form.otp.value.trim();
+          const p1 = form.password.value;
+          const p2 = form.password_confirm.value;
+          const btn = form.querySelector('button[type="submit"]');
+
+          if (p1 !== p2) {
+            this.renderForgotPasswordForm(email, 2, otp, 'Passwords do not match. Please re-enter.', true);
+            return;
+          }
+
+          try {
+            btn.disabled = true;
+            btn.textContent = 'Verifying & Updating...';
+
+            const res = await apiClient.verifyOtpAndResetPassword(email, otp, p1);
+            this.showToast('Password updated! You can now sign in.');
+            this.renderLoginForm('', res.message || 'Password successfully updated! Please sign in with your new password.');
+          } catch (err) {
+            btn.disabled = false;
+            btn.textContent = 'Set New Password & Sign In';
+            this.renderForgotPasswordForm(email, 2, otp, err.message || 'Failed to verify code.', true);
+          }
+        };
+      }
+    }
   }
 
   async renderCMS() {
