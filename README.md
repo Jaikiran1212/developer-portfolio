@@ -2,7 +2,6 @@
 
 A production-ready, security-hardened, and responsive developer portfolio featuring an interactive visual design system and an administrative Content Management System (CMS) powered by **Supabase Auth**, **Supabase PostgreSQL with Row Level Security (RLS)**, and **Vercel Serverless Functions**.
 
-![Portfolio Visual Identity](public/images/profile.png)
 
 ---
 
