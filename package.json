@@ -1,0 +1,28 @@
+{
+  "name": "jaikiran-developer-portfolio",
+  "version": "2.0.0",
+  "description": "Production-ready developer portfolio with secure Supabase Auth and CMS for Jai Kiran",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": [
+    "portfolio",
+    "developer-portfolio",
+    "supabase",
+    "vercel",
+    "cybersecurity",
+    "full-stack"
+  ],
+  "author": "Jai Kiran",
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1"
+  },
+  "devDependencies": {
+    "vite": "^5.4.14"
+  }
+}

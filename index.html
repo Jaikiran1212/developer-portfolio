@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Jai Kiran – Full-Stack Developer &amp; Cybersecurity Enthusiast</title>
+  
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="Portfolio of Jai Kiran, Computer Science student at Amrita Vishwa Vidyapeetham. Featuring responsive web development, algorithmic visualizers, and cybersecurity case studies.">
+  <meta name="keywords" content="Jai Kiran, Full-Stack Developer, Cybersecurity, Computer Science, Amrita Vishwa Vidyapeetham, React, Java, DSA, Web Development">
+  <meta name="author" content="Jai Kiran">
+  <link rel="canonical" href="https://jaikiran-portfolio.vercel.app/">
+  <meta name="theme-color" content="#090d16">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://jaikiran-portfolio.vercel.app/">
+  <meta property="og:title" content="Jai Kiran – Full-Stack Developer &amp; Cybersecurity Enthusiast">
+  <meta property="og:description" content="Explore interactive algorithm visualizers, responsive web projects, and cybersecurity incident simulations by Jai Kiran.">
+  <meta property="og:image" content="https://jaikiran-portfolio.vercel.app/images/profile.png">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://jaikiran-portfolio.vercel.app/">
+  <meta name="twitter:title" content="Jai Kiran – Full-Stack Developer &amp; Cybersecurity Enthusiast">
+  <meta name="twitter:description" content="Explore interactive algorithm visualizers, responsive web projects, and cybersecurity incident simulations by Jai Kiran.">
+  <meta name="twitter:image" content="https://jaikiran-portfolio.vercel.app/images/profile.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+
+  <!-- Modern Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Space+Grotesk:wght@500;700&family=Outfit:wght@600;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;600;700&family=Fira+Code:wght@500;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+
+  <!-- JSON-LD Structured Data Schema -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Person",
+        "@id": "https://jaikiran-portfolio.vercel.app/#person",
+        "name": "Jai Kiran",
+        "url": "https://jaikiran-portfolio.vercel.app/",
+        "jobTitle": "Full-Stack Developer & Cybersecurity Enthusiast",
+        "alumniOf": {
+          "@type": "CollegeOrUniversity",
+          "name": "Amrita Vishwa Vidyapeetham"
+        },
+        "knowsAbout": [
+          "Web Development",
+          "Data Structures & Algorithms",
+          "Cybersecurity",
+          "Incident Response",
+          "Cloud Firestore",
+          "Java",
+          "JavaScript",
+          "React"
+        ],
+        "sameAs": [
+          "https://github.com/Jaikiran1212",
+          "https://www.linkedin.com/in/jaikiran1212",
+          "https://leetcode.com/u/Jaikiran1212/"
+        ]
+      },
+      {
+        "@type": "ProfilePage",
+        "@id": "https://jaikiran-portfolio.vercel.app/#webpage",
+        "url": "https://jaikiran-portfolio.vercel.app/",
+        "name": "Jai Kiran – Developer Portfolio",
+        "isPartOf": {
+          "@type": "WebSite",
+          "name": "Jai Kiran Portfolio",
+          "url": "https://jaikiran-portfolio.vercel.app/"
+        },
+        "about": {
+          "@id": "https://jaikiran-portfolio.vercel.app/#person"
+        }
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <!-- Accessible Skip Link -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- Top Scroll Reading Indicator -->
+  <div id="bar" aria-hidden="true"></div>
+
+  <!-- Interactive Background Particle Constellation -->
+  <canvas id="bgCanvas" aria-hidden="true"></canvas>
+
+  <div id="pub">
+    <!-- Desktop Header Navigation -->
+    <nav id="nav" aria-label="Main Navigation">
+      <a class="l" href="#about">About me</a>
+      <a class="l" href="#skills">Skills</a>
+      <a class="l" href="#experience">Experience</a>
+      <a class="l" href="#portfolio">Portfolio</a>
+      <a class="pill" href="#contact">CONTACT ME</a>
+      <button class="tg" id="th" aria-label="Toggle theme color mode"></button>
+    </nav>
+
+    <!-- Mobile Hamburger Button -->
+    <button id="menuBtn" aria-label="Open mobile navigation menu" aria-expanded="false" aria-controls="mobNav">
+      <i></i><i></i><i></i>
+    </button>
+
+    <!-- Mobile Navigation Drawer -->
+    <div id="mobNav" aria-label="Mobile Navigation">
+      <a href="#about" style="--i:0">About me</a>
+      <a href="#skills" style="--i:1">Skills</a>
+      <a href="#experience" style="--i:2">Experience</a>
+      <a href="#portfolio" style="--i:3">Portfolio</a>
+      <a class="pill" href="#contact" style="--i:4">CONTACT ME</a>
+      <a href="#admin" style="--i:5">Admin CMS</a>
+    </div>
+
+    <!-- Hero Section -->
+    <header id="hero">
+      <div id="glow" aria-hidden="true"></div>
+      <div class="mono" aria-hidden="true">JK</div>
+
+      <div class="L">
+        <div class="Lc">
+          <p class="hi" id="greet"></p>
+          <h1 id="nm"></h1>
+          <div id="typ" aria-live="polite"></div>
+        </div>
+        <div class="soc" id="soc" aria-label="Social and coding profiles"></div>
+      </div>
+
+      <div class="P" id="pp">
+        <div class="orb" aria-hidden="true"><i></i></div>
+        <div class="orb r" aria-hidden="true"><i></i></div>
+        <div class="fl">
+          <div class="gb">
+            <div class="arch">
+              <img alt="Portrait photograph of Jai Kiran" src="/images/profile.png" width="400" height="480">
+            </div>
+          </div>
+        </div>
+        <span class="bdg b1" aria-hidden="true">&lt;/&gt;</span>
+        <span class="bdg b2" aria-hidden="true">IAM</span>
+        <span class="bdg b3" aria-hidden="true">Java</span>
+        <span class="bdg b4" aria-hidden="true">DSA</span>
+      </div>
+    </header>
+
+    <!-- Scrolling Skills Marquee -->
+    <aside class="mq" aria-label="Skills Marquee"><div id="mq"></div></aside>
+
+    <main id="main-content">
+      <!-- About Me Section -->
+      <section id="about" class="lt" aria-labelledby="heading-about">
+        <div class="wrap">
+          <h2 id="heading-about" class="fr rv" style="margin-top:0">
+            <svg aria-hidden="true"><rect pathLength="1"/></svg>
+            <b>ABOUT ME</b>
+          </h2>
+          <div class="dv rv" aria-hidden="true">— \\\\// —</div>
+          <p class="lead rv" id="ld"></p>
+          <div class="grid" id="pil" aria-label="Core Engineering Pillars"></div>
+        </div>
+      </section>
+
+      <!-- Technical Skills Section -->
+      <section id="skills" class="dk" aria-labelledby="heading-skills">
+        <div class="wrap">
+          <h2 id="heading-skills" class="fr rv">
+            <svg aria-hidden="true"><rect pathLength="1"/></svg>
+            <b>SKILLS</b>
+          </h2>
+          <div class="dv rv" aria-hidden="true">— \\\\// —</div>
+          <div id="sk"></div>
+        </div>
+      </section>
+
+      <!-- Experience & Certifications Section -->
+      <section id="experience" class="lt" aria-labelledby="heading-exp">
+        <div class="wrap">
+          <h2 id="heading-exp" class="fr rv">
+            <svg aria-hidden="true"><rect pathLength="1"/></svg>
+            <b>EXPERIENCE &amp; CERTS</b>
+          </h2>
+          <div class="dv rv" aria-hidden="true">— \\\\// —</div>
+          <div class="tl" id="tl">
+            <div class="fill" id="fill"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Portfolio Projects Section -->
+      <section id="portfolio" class="dk" aria-labelledby="heading-portfolio">
+        <div class="wrap">
+          <h2 id="heading-portfolio" class="fr rv">
+            <svg aria-hidden="true"><rect pathLength="1"/></svg>
+            <b>PORTFOLIO</b>
+          </h2>
+          <div class="dv rv" aria-hidden="true">— \\\\// —</div>
+          <div class="grid" id="pj" aria-label="Featured Projects &amp; Case Studies"></div>
+          <p class="dv rv" style="margin:50px 0 0">
+            | <a class="resume" id="rs" href="#" target="_blank" rel="noopener noreferrer">VIEW RESUME</a> |
+          </p>
+        </div>
+      </section>
+
+      <!-- Contact Section -->
+      <section id="contact" class="lt" aria-labelledby="heading-contact">
+        <div class="wrap">
+          <h2 id="heading-contact" class="fr rv">
+            <svg aria-hidden="true"><rect pathLength="1"/></svg>
+            <b>CONTACT</b>
+          </h2>
+          <div class="dv rv" aria-hidden="true">— \\\\// —</div>
+          <div class="two">
+            <div id="ctc" aria-label="Direct contact channels"></div>
+            <form id="cf" class="rv" style="--i:2" aria-label="Send a direct message">
+              <!-- Honeypot anti-spam trap (invisible to human visitors) -->
+              <div class="hp-trap" aria-hidden="true">
+                <label for="trap-input">Leave this field blank</label>
+                <input id="trap-input" name="website_trap" tabindex="-1" autocomplete="off">
+              </div>
+
+              <label for="cf-name">Your Name *</label>
+              <input id="cf-name" name="name" required autocomplete="name" placeholder="Alex Morgan">
+
+              <label for="cf-email">Your Email Address *</label>
+              <input id="cf-email" name="email" type="email" required autocomplete="email" placeholder="alex@company.com">
+
+              <label for="cf-subject">Subject *</label>
+              <input id="cf-subject" name="subject" required placeholder="Project Collaboration / Internship Inquiry">
+
+              <label for="cf-message">Message *</label>
+              <textarea id="cf-message" name="message" rows="5" required placeholder="Hi Jai Kiran, I came across your portfolio and would like to discuss..."></textarea>
+
+              <button class="btn primary" type="submit" style="width:100%;margin-top:6px">
+                Send Message
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Semantic Footer -->
+    <footer>
+      <p>© 2026 Jai Kiran · Computer Science &amp; Engineering · <a href="#admin">Admin CMS</a></p>
+    </footer>
+  </div>
+
+  <!-- Admin CMS Container -->
+  <div id="adm" aria-label="Admin Content Management System"></div>
+
+  <!-- Global Toast Alert Container -->
+  <div id="toast" role="alert" aria-live="assertive"></div>
+
+  <!-- Client Application Script -->
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
