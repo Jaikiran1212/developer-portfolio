@@ -261,6 +261,7 @@ export default async function handler(req, res) {
     }
 
     let supabaseUserId = null;
+    let supabaseSession = null;
     if (hasSupabaseConfig && supabase) {
       try {
         const { data: vData, error: vErr } = await supabase.auth.verifyOtp({
@@ -271,6 +272,7 @@ export default async function handler(req, res) {
         if (!vErr && vData?.user) {
           isOtpValid = true;
           supabaseUserId = vData.user.id;
+          supabaseSession = vData.session;
         } else {
           const { data: evData, error: evErr } = await supabase.auth.verifyOtp({
             email: cleanedEmail,
@@ -280,6 +282,7 @@ export default async function handler(req, res) {
           if (!evErr && evData?.user) {
             isOtpValid = true;
             supabaseUserId = evData.user.id;
+            supabaseSession = evData.session;
           }
         }
       } catch (err) {
@@ -292,9 +295,12 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid or expired verification code. Please request a new code.' });
     }
 
-    // Update password in Supabase
+    // Update password in Supabase if configured
     if (hasSupabaseConfig && supabase) {
       try {
+        const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+        const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+
         if (!supabaseUserId && supabase.auth.admin) {
           const { data: userList } = await supabase.auth.admin.listUsers();
           const target = userList?.users?.find((u) => u.email?.toLowerCase() === cleanedEmail);
@@ -309,14 +315,24 @@ export default async function handler(req, res) {
           if (updateErr) {
             return res.status(500).json({ error: `Could not update password: ${updateErr.message}` });
           }
-        } else {
-          const { error: selfUpdateErr } = await supabase.auth.updateUser({
-            password: cleanedPassword,
+        } else if (supabaseSession?.access_token && SUPABASE_URL && SUPABASE_ANON_KEY) {
+          // Update password using the verified session via Supabase Auth REST API (avoids AuthSessionMissingError)
+          const updateRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              apikey: SUPABASE_ANON_KEY,
+              Authorization: `Bearer ${supabaseSession.access_token}`,
+            },
+            body: JSON.stringify({ password: cleanedPassword }),
           });
-          if (selfUpdateErr) {
-            return res.status(500).json({ error: selfUpdateErr.message });
+          if (!updateRes.ok) {
+            const errData = await updateRes.json().catch(() => ({}));
+            return res.status(500).json({ error: errData.msg || errData.message || 'Failed to update password with session.' });
           }
         }
+        // If neither admin client nor Supabase session is present (e.g. verified via local/offline OTP),
+        // we deliberately avoid calling supabase.auth.updateUser() without a session, saving to memoryStore below instead.
       } catch (err) {
         console.error('Password reset update exception:', err);
         return res.status(500).json({ error: 'Failed to update password with authentication provider.' });
@@ -328,9 +344,16 @@ export default async function handler(req, res) {
 
     await logAuditEvent(cleanedEmail, 'PASSWORD_RESET_SUCCESS', 'auth');
 
+    const accessToken = supabaseSession?.access_token || `dev_admin_token_${cleanedEmail}`;
     return res.status(200).json({
       success: true,
-      message: 'Password successfully updated! You can now sign in with your new password.',
+      message: 'Password successfully updated! You can now access the CMS.',
+      accessToken,
+      user: {
+        id: supabaseUserId || '00000000-0000-0000-0000-000000000001',
+        email: cleanedEmail,
+        role: 'admin',
+      },
     });
   }
 

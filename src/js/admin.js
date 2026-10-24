@@ -289,8 +289,15 @@ export class AdminCMS {
             btn.textContent = 'Verifying & Updating...';
 
             const res = await apiClient.verifyOtpAndResetPassword(email, otp, p1);
-            this.showToast('Password updated! You can now sign in.');
-            this.renderLoginForm('', res.message || 'Password successfully updated! Please sign in with your new password.');
+            if (res.accessToken) {
+              apiClient.setToken(res.accessToken);
+              this.currentUser = res.user;
+              this.showToast('Password updated! Signed in successfully.');
+              await this.renderCMS();
+            } else {
+              this.showToast('Password updated! You can now sign in.');
+              this.renderLoginForm('', res.message || 'Password successfully updated! Please sign in with your new password.');
+            }
           } catch (err) {
             btn.disabled = false;
             btn.textContent = 'Set New Password & Sign In';
