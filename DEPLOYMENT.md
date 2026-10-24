@@ -84,24 +84,25 @@ To adhere strictly to zero-trust security standards:
    | `ADMIN_EMAILS` | `jaikiranjp@gmail.com` | Comma-separated authorized admin emails |
 6. Click **Deploy**. Vercel will build the frontend into `dist/` and configure the `/api` serverless endpoints.
 
-### Method B: Deploy via Vercel CLI
+### Method B: Deploy via Vercel CLI (No sudo needed)
+
+Use `npx vercel` directly without needing global sudo install permissions:
 
 ```bash
-# Install Vercel CLI if not already installed
-npm i -g vercel
+# 1. Link your project to Vercel (interactive login)
+npx vercel
 
-# Link and deploy
-vercel
+# 2. Add your production environment variables / secrets
+npx vercel env add VITE_SUPABASE_URL production
+npx vercel env add VITE_SUPABASE_ANON_KEY production
+npx vercel env add SUPABASE_SERVICE_ROLE_KEY production
+npx vercel env add ADMIN_EMAILS production
 
-# Add production secrets
-vercel env add VITE_SUPABASE_URL production
-vercel env add VITE_SUPABASE_ANON_KEY production
-vercel env add SUPABASE_SERVICE_ROLE_KEY production
-vercel env add ADMIN_EMAILS production
-
-# Deploy to production
-vercel --prod
+# 3. Deploy to production
+npx vercel --prod
 ```
+
+*(Note: If you prefer installing the CLI globally on Linux, run `sudo npm i -g vercel`)*
 
 ---
 

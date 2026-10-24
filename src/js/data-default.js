@@ -67,7 +67,7 @@ export const DEFAULT_PORTFOLIO_DATA = {
     email: 'jaikiranjp@gmail.com',
     phone: '+91 9445187244',
     location: 'Trichy / Coimbatore',
-    resume_url: 'https://drive.google.com/file/d/your-resume-id/view?usp=sharing',
+    resume_url: 'https://drive.google.com/file/d/1YQp_62YhIoTQBWrKt6myzLJA4oJjEzZv/view?usp=drive_link',
     font_preset: 'Cyber Geometric',
     theme: 'Alternating Contrast',
     photo_config: {
@@ -136,7 +136,7 @@ export const DEFAULT_PORTFOLIO_DATA = {
       notes_markdown:
         '## Overview\nTeam project from our Data Structures & Algorithms course visualizing Knuth’s Dancing Links (Algorithm X).\n\n## My Contribution\n- Built the interactive frontend UI in HTML, CSS and JavaScript\n- Step-by-step playback with speed control\n- Dynamic grid state rendering as solver covers/uncovers columns\n\n## Solver Logic\n- C++ solver logic written by teammates',
       tech_stack: ['JavaScript', 'HTML5', 'CSS3', 'C++ Solver Logic'],
-      repo_url: 'https://github.com/sivaadhithian/DLX-Sudoku-Constraint-Solver',
+      repo_url: 'https://github.com/Jaikiran1212/DLX-Sudoku-Constraint-Solver',
       live_url: '',
       image_url: '',
       featured: true,
