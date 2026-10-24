@@ -2,9 +2,22 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import portfolioHandler from '../api/portfolio.js';
 import contactHandler from '../api/contact.js';
-import loginHandler from '../api/auth/login.js';
-import cmsProjectsHandler from '../api/cms/projects.js';
-import cmsMessagesHandler from '../api/cms/messages.js';
+import authHandler from '../api/auth/[action].js';
+import cmsHandler from '../api/cms/[resource].js';
+
+// Route action wrappers for consolidated functions
+const loginHandler = (req, res) => {
+  req.query = { action: 'login', ...req.query };
+  return authHandler(req, res);
+};
+const cmsProjectsHandler = (req, res) => {
+  req.query = { resource: 'projects', ...req.query };
+  return cmsHandler(req, res);
+};
+const cmsMessagesHandler = (req, res) => {
+  req.query = { resource: 'messages', ...req.query };
+  return cmsHandler(req, res);
+};
 
 // Helper to create mock req / res
 function createMockReqRes({ method = 'GET', headers = {}, body = {}, query = {} } = {}) {

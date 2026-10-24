@@ -117,4 +117,5 @@ npx vercel --prod
 - [x] **Anti-Spam:** Honeypot field traps automated bots silently without saving spam.
 - [x] **Auditing:** Administrative actions are logged to `audit_logs` without recording passwords or secrets.
 - [x] **Headers:** CSP, X-Frame-Options (`DENY`), and nosniff configured in `vercel.json`.
+- [x] **Vercel Hobby Plan Compatible:** Consolidated into 4 dynamic serverless functions (`api/auth/[action].js`, `api/cms/[resource].js`, `api/contact.js`, `api/portfolio.js`), well under the 12-function Hobby plan limit.
 - [x] **Offline Resilience:** If Supabase is unreachable or credentials are not yet set, the portfolio seamlessly falls back to pre-seeded static data so it never displays a blank error page.
