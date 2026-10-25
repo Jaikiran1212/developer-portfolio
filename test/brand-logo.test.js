@@ -11,11 +11,11 @@ test('Brand Logo System - provides 5 built-in vector presets', () => {
   const presetKeys = Object.keys(LOGO_PRESETS);
   assert.equal(presetKeys.length, 5);
   assert.deepEqual(presetKeys.sort(), [
-    'code-crest',
-    'cyber-cube',
+    'cyber-knot',
     'hex-ribbon',
     'minimal-seal',
-    'neon-shield',
+    'neon-prism',
+    'quantum-fold',
   ].sort());
 });
 

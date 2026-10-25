@@ -1,239 +1,277 @@
 // ==============================================================================
-// BRAND LOGO SYSTEM & AUTO-FAVICON SYNC ENGINE
-// 5 Built-in Geometric Vector Presets + Custom PNG/SVG Upload Support
+// CREATIVE BRAND LOGO SYSTEM & AUTO-FAVICON SYNC ENGINE
+// Abstract Geometric Emblems with Subliminal, Non-Explicit "JK" Integration
+// Inspired by Tomasz Gajda, Penrose Optical Geometry & Swiss Modernism
 // ==============================================================================
 
 /**
- * 5 Built-in Vector Logo Presets
+ * 5 Built-in Creative Vector Logo Presets
+ * Each logo creatively and subliminally integrates the essence of "JK" into pure abstract geometry.
  */
 export const LOGO_PRESETS = {
   'hex-ribbon': {
     id: 'hex-ribbon',
     name: 'Hex Ribbon Monogram',
-    description: 'Interlocking hexagonal geometric ribbon monogram (JK) inspired by Tomasz Gajda emblem',
+    description: 'Interlocking isometric geometric ribbon emblem with origami facet folds and subliminal JK flow (Tomasz Gajda inspired)',
     isDefault: true,
     svg: (c1 = '#22d3ee', c2 = '#8b5cf6') => `
 <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="hr-cyan" x1="12" y1="6" x2="88" y2="94" gradientUnits="userSpaceOnUse">
+    <!-- Cyan to Deep Sky Gradient -->
+    <linearGradient id="hr-c1" x1="15" y1="10" x2="85" y2="90" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="${c1}"/>
       <stop offset="100%" stop-color="#0284c7"/>
     </linearGradient>
-    <linearGradient id="hr-purp" x1="88" y1="6" x2="12" y2="94" gradientUnits="userSpaceOnUse">
+
+    <!-- Electric Violet to Magenta Gradient -->
+    <linearGradient id="hr-c2" x1="85" y1="10" x2="15" y2="90" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="${c2}"/>
       <stop offset="100%" stop-color="#ec4899"/>
     </linearGradient>
-    <linearGradient id="hr-dark" x1="50" y1="20" x2="50" y2="80" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#0f172a" stop-opacity="0.75"/>
-      <stop offset="100%" stop-color="#020617" stop-opacity="0.95"/>
+
+    <!-- Emerald / Cyan Transition -->
+    <linearGradient id="hr-c3" x1="50" y1="10" x2="50" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#0891b2"/>
     </linearGradient>
-    <linearGradient id="hr-lite" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.4"/>
+
+    <!-- Ambient Occlusion Shadow for 3D Ribbon Overlap -->
+    <linearGradient id="hr-shadow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#030712" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#030712" stop-opacity="0.15"/>
+    </linearGradient>
+
+    <!-- Specular Highlight for Top Bevels -->
+    <linearGradient id="hr-specular" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.5"/>
       <stop offset="100%" stop-color="#ffffff" stop-opacity="0.05"/>
     </linearGradient>
+
     <filter id="hr-glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="3" result="blur"/>
-      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-    </filter>
-  </defs>
-
-  <!-- Ambient Outer Glow -->
-  <polygon points="50,8 86,28 86,72 50,92 14,72 14,28" stroke="url(#hr-cyan)" stroke-width="1.5" stroke-opacity="0.35" fill="none"/>
-
-  <!-- Tomasz Gajda Inspired Interlocking Hexagonal Ribbon Structure -->
-  <!-- Facet 1: Top Right Hex Ridge -->
-  <polygon points="50,11 83,30 68,39 50,28" fill="url(#hr-cyan)"/>
-  <polygon points="50,11 83,30 68,39 50,28" fill="url(#hr-lite)"/>
-
-  <!-- Facet 2: Left J-Drop Band -->
-  <polygon points="17,30 50,11 50,28 32,39 32,67 17,59" fill="url(#hr-cyan)"/>
-  
-  <!-- Facet 3: J-Hook Bottom Curve Fold -->
-  <polygon points="17,59 32,67 32,74 50,84 50,68 62,61 62,77 50,84 17,65" fill="url(#hr-purp)"/>
-  
-  <!-- Facet 4: Center Spine Interlock -->
-  <polygon points="50,28 68,39 68,54 50,43" fill="#0891b2"/>
-  
-  <!-- Facet 5: K Upper Diagonal Branch -->
-  <polygon points="50,43 68,54 83,30 65,20" fill="url(#hr-purp)"/>
-  <polygon points="68,39 83,30 83,47 68,57" fill="#7c3aed"/>
-
-  <!-- Facet 6: K Lower Diagonal Branch -->
-  <polygon points="50,43 68,54 83,70 65,80" fill="url(#hr-cyan)"/>
-  <polygon points="68,54 83,70 83,53 68,40" fill="#0284c7"/>
-
-  <!-- Facet 7: Center Overlap Shadow Ribbon -->
-  <polygon points="44,35 56,42 56,58 44,51" fill="url(#hr-dark)"/>
-  <polygon points="46,37 54,42 54,56 46,51" fill="${c1}" fill-opacity="0.8"/>
-
-  <!-- Dynamic J-Stem Accent Hook -->
-  <path d="M32 42V67L50 78V66L38 59V42H32Z" fill="#38bdf8"/>
-
-  <!-- Monogram Accent Nodes -->
-  <circle cx="50" cy="11" r="2.5" fill="#ffffff" filter="url(#hr-glow)"/>
-  <circle cx="83" cy="30" r="2" fill="${c1}"/>
-  <circle cx="83" cy="70" r="2" fill="${c2}"/>
-  <circle cx="50" cy="84" r="2" fill="#ffffff"/>
-  <circle cx="17" cy="30" r="2" fill="${c1}"/>
-  <circle cx="17" cy="59" r="2" fill="${c2}"/>
-</svg>`
-  },
-
-  'cyber-cube': {
-    id: 'cyber-cube',
-    name: 'Cyber Cube 3D',
-    description: 'Isometric 3D cyber cube monogram with neon cyan/purple wireframe facets forming JK',
-    svg: (c1 = '#22d3ee', c2 = '#8b5cf6') => `
-<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="cc-top" x1="50" y1="10" x2="50" y2="50" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="${c1}" stop-opacity="0.4"/>
-      <stop offset="100%" stop-color="${c2}" stop-opacity="0.15"/>
-    </linearGradient>
-    <linearGradient id="cc-left" x1="14" y1="30" x2="50" y2="90" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#0f172a"/>
-      <stop offset="100%" stop-color="#1e1b4b"/>
-    </linearGradient>
-    <linearGradient id="cc-right" x1="86" y1="30" x2="50" y2="90" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#020617"/>
-      <stop offset="100%" stop-color="#0f172a"/>
-    </linearGradient>
-  </defs>
-
-  <!-- Isometric Outer Cube Boundary -->
-  <polygon points="50,10 86,30 86,72 50,92 14,72 14,30" stroke="${c1}" stroke-width="2" fill="none"/>
-
-  <!-- Top Diamond Face -->
-  <polygon points="50,12 82,30 50,48 18,30" fill="url(#cc-top)" stroke="${c1}" stroke-width="1.5"/>
-  <line x1="50" y1="12" x2="50" y2="48" stroke="${c2}" stroke-width="1" stroke-dasharray="3 3"/>
-  <line x1="18" y1="30" x2="82" y2="30" stroke="${c2}" stroke-width="1" stroke-dasharray="3 3"/>
-
-  <!-- Left Face: Stylized 'J' Geometry -->
-  <polygon points="18,32 50,50 50,88 18,70" fill="url(#cc-left)" stroke="${c1}" stroke-width="1.5"/>
-  <!-- J Monogram Inscription -->
-  <path d="M26 42H38V66L32 70L24 65V56H29V62L32 64L34 62V46H26V42Z" fill="${c1}"/>
-
-  <!-- Right Face: Stylized 'K' Geometry -->
-  <polygon points="50,50 82,32 82,70 50,88" fill="url(#cc-right)" stroke="${c2}" stroke-width="1.5"/>
-  <!-- K Monogram Inscription -->
-  <path d="M56 46H62V58L72 46H79L68 59L80 74H72L62 62V74H56V46Z" fill="${c2}"/>
-
-  <!-- Center Vertex Node -->
-  <circle cx="50" cy="50" r="3.5" fill="#ffffff"/>
-  <circle cx="50" cy="50" r="6" stroke="${c1}" stroke-width="1.2"/>
-</svg>`
-  },
-
-  'code-crest': {
-    id: 'code-crest',
-    name: 'Code Crest Heraldic',
-    description: 'Geometric heraldic coding crest with < / > brackets and shield monogram',
-    svg: (c1 = '#22d3ee', c2 = '#10b981') => `
-<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="crest-bg" x1="50" y1="10" x2="50" y2="92" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#0f172a"/>
-      <stop offset="100%" stop-color="#022c22"/>
-    </linearGradient>
-    <linearGradient id="crest-stroke" x1="16" y1="10" x2="84" y2="92" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="${c1}"/>
-      <stop offset="50%" stop-color="${c2}"/>
-      <stop offset="100%" stop-color="#38bdf8"/>
-    </linearGradient>
-  </defs>
-
-  <!-- Outer Shield Crest -->
-  <path d="M50 8L84 18V54C84 72 68 86 50 92C32 86 16 72 16 54V18L50 8Z" fill="url(#crest-bg)" stroke="url(#crest-stroke)" stroke-width="2.5"/>
-
-  <!-- Top Bracket Banner -->
-  <path d="M34 26L28 32L34 38" stroke="${c1}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <line x1="54" y1="24" x2="46" y2="40" stroke="${c2}" stroke-width="2.2" stroke-linecap="round"/>
-  <path d="M66 26L72 32L66 38" stroke="${c1}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-
-  <!-- Inner Geometric JK Monogram -->
-  <!-- J -->
-  <path d="M36 46H44V64C44 68 41 71 36 71C32 71 28 68 28 64H34C34 65 35 66 36 66C37.5 66 38 65 38 63V52H36V46Z" fill="${c1}"/>
-  <!-- K -->
-  <path d="M52 46H58V56L68 46H76L64 58L77 72H68L58 61V72H52V46Z" fill="${c2}"/>
-
-  <!-- Tech Dots / Accents -->
-  <circle cx="50" cy="82" r="2.5" fill="#ffffff"/>
-  <line x1="26" y1="50" x2="26" y2="60" stroke="${c1}" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="74" y1="50" x2="74" y2="60" stroke="${c2}" stroke-width="1.5" stroke-linecap="round"/>
-</svg>`
-  },
-
-  'neon-shield': {
-    id: 'neon-shield',
-    name: 'Neon Cyber Shield',
-    description: 'Futuristic neon cybersecurity polygon shield with glowing angled JK monogram',
-    svg: (c1 = '#22d3ee', c2 = '#ec4899') => `
-<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="ns-glow" x1="12" y1="12" x2="88" y2="92" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="${c1}"/>
-      <stop offset="100%" stop-color="${c2}"/>
-    </linearGradient>
-    <filter id="ns-bloom" x="-20%" y="-20%" width="140%" height="140%">
       <feGaussianBlur stdDeviation="2.5" result="blur"/>
       <feComposite in="SourceGraphic" in2="blur" operator="over"/>
     </filter>
   </defs>
 
-  <!-- Outer Neon Polygonal Plate -->
-  <polygon points="50,8 86,20 86,60 50,92 14,60 14,20" stroke="url(#ns-glow)" stroke-width="2.5" fill="#090d16" filter="url(#ns-bloom)"/>
+  <!-- Ambient Geometric Hexagon Wireframe Aura -->
+  <polygon points="50,8 86,28 86,72 50,92 14,72 14,28" stroke="url(#hr-c1)" stroke-width="1.2" stroke-opacity="0.28" fill="none"/>
 
-  <!-- Inner Defensive Mesh Lines -->
-  <polygon points="50,16 78,26 78,56 50,82 22,56 22,26" stroke="${c1}" stroke-width="1" stroke-opacity="0.35" fill="none"/>
-  <line x1="50" y1="16" x2="50" y2="82" stroke="${c2}" stroke-width="1" stroke-opacity="0.4" stroke-dasharray="2 4"/>
+  <!-- ========================================================================
+       TOMASZ GAJDA INSPIRED INTERLOCKING RIBBON ARCHITECTURE
+       A continuous 3D isometric ribbon loop where the flowing facets subliminally
+       encode the descending leftward-to-bottom hook of 'J' and the interlocking
+       60° diagonal branching chevron facets of 'K'.
+       ======================================================================== -->
 
-  <!-- Center Cyber Monogram JK -->
-  <!-- J -->
-  <path d="M34 36H44V58C44 64 38 68 32 68H28V62H32C35 62 37 60 37 57V42H34V36Z" fill="${c1}"/>
-  <!-- K -->
-  <path d="M52 36H59V50L70 36H78L66 52L79 68H70L59 54V68H52V36Z" fill="${c2}"/>
+  <!-- [Facet A: Top-Left Header Bevel] -->
+  <polygon points="50,11 83,30 68,38 50,27" fill="url(#hr-c3)"/>
+  <polygon points="50,11 83,30 68,38 50,27" fill="url(#hr-specular)"/>
 
-  <!-- Node Flares -->
-  <circle cx="50" cy="8" r="3" fill="#ffffff"/>
-  <circle cx="86" cy="20" r="2" fill="${c1}"/>
-  <circle cx="14" cy="20" r="2" fill="${c2}"/>
-  <circle cx="50" cy="92" r="3" fill="${c1}"/>
+  <!-- [Facet B: Left Descending J-Spine Outer Ribbon] -->
+  <polygon points="17,30 50,11 50,27 32,38 32,66 17,58" fill="url(#hr-c1)"/>
+
+  <!-- [Facet C: Left Descending J-Spine Inner Plane (Depth Shadow)] -->
+  <polygon points="32,38 50,27 50,44 32,54" fill="#0369a1"/>
+
+  <!-- [Facet D: J-Hook Bottom Sweep & Terminal Isometric Rise] -->
+  <polygon points="17,58 32,66 32,74 50,84 50,68 62,61 62,77 50,84 17,65" fill="url(#hr-c2)"/>
+  <polygon points="50,68 62,61 62,77 50,84" fill="#6d28d9"/>
+
+  <!-- [Facet E: Central Chiral Interlock Node] -->
+  <polygon points="46,39 54,43 54,58 46,53" fill="url(#hr-shadow)"/>
+  <polygon points="48,41 52,43 52,56 48,53" fill="${c1}" fill-opacity="0.9"/>
+
+  <!-- [Facet F: K Upper Diagonal Branch (Isometric 30° Ascent)] -->
+  <polygon points="50,44 68,38 83,29 65,20" fill="url(#hr-c2)"/>
+  <polygon points="68,38 83,29 83,47 68,56" fill="#7c3aed"/>
+  <polygon points="68,38 83,29 83,47 68,56" fill="url(#hr-specular)"/>
+
+  <!-- [Facet G: K Lower Diagonal Branch (Isometric -30° Descent)] -->
+  <polygon points="50,44 68,56 83,70 65,80" fill="url(#hr-c1)"/>
+  <polygon points="68,56 83,70 83,52 68,38" fill="#0284c7"/>
+
+  <!-- [Central Negative-Space Diamond Core Glow] -->
+  <polygon points="50,38 60,44 50,50 40,44" fill="${c1}" fill-opacity="0.2" stroke="${c1}" stroke-width="0.8"/>
+
+  <!-- Precision Vertex Flares -->
+  <circle cx="50" cy="11" r="2.5" fill="#ffffff" filter="url(#hr-glow)"/>
+  <circle cx="83" cy="29" r="1.8" fill="${c1}"/>
+  <circle cx="83" cy="70" r="1.8" fill="${c2}"/>
+  <circle cx="50" cy="84" r="2" fill="#ffffff"/>
+  <circle cx="17" cy="30" r="1.8" fill="${c1}"/>
+  <circle cx="17" cy="58" r="1.8" fill="${c2}"/>
+</svg>`
+  },
+
+  'cyber-knot': {
+    id: 'cyber-knot',
+    name: 'Cyber Knot 3D',
+    description: 'Impossible Penrose hex-knot with isometric prismatic beams and subliminal JK optical flow',
+    svg: (c1 = '#22d3ee', c2 = '#8b5cf6') => `
+<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="ck-b1" x1="16" y1="20" x2="84" y2="80" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="${c1}"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+    <linearGradient id="ck-b2" x1="84" y1="20" x2="16" y2="80" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="${c2}"/>
+      <stop offset="100%" stop-color="#ec4899"/>
+    </linearGradient>
+    <linearGradient id="ck-top" x1="50" y1="12" x2="50" y2="50" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.05"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Outer Isometric Cube / Hexagon Envelope -->
+  <polygon points="50,10 86,30 86,72 50,92 14,72 14,30" stroke="${c1}" stroke-width="1.5" stroke-opacity="0.4" fill="#090d16"/>
+
+  <!-- Optical Impossible Prismatic Beams -->
+  <!-- Beam 1: Descending Vertical Spine looping inward at base (Abstract 'J' flow) -->
+  <polygon points="22,34 38,26 38,62 54,71 54,82 22,64" fill="url(#ck-b1)"/>
+  <polygon points="22,34 38,26 38,62 54,71 54,82 22,64" fill="url(#ck-top)"/>
+
+  <!-- Beam 2: Interlocking Upper Cross-Branch (Abstract Upper 'K' arm) -->
+  <polygon points="38,26 68,10 82,18 52,35 52,48 38,40" fill="url(#ck-b2)"/>
+
+  <!-- Beam 3: Interlocking Lower Diagonal Branch (Abstract Lower 'K' arm) -->
+  <polygon points="52,48 78,63 78,74 52,60" fill="url(#ck-b1)"/>
+  <polygon points="62,39 78,48 78,63 62,54" fill="#7c3aed"/>
+
+  <!-- Negative Space Isometric Core -->
+  <polygon points="50,42 64,50 50,58 36,50" fill="#030712" stroke="${c1}" stroke-width="1.2"/>
+  <circle cx="50" cy="50" r="2.5" fill="#ffffff"/>
+
+  <!-- Isometric Perimeter Nodes -->
+  <circle cx="50" cy="10" r="2" fill="${c1}"/>
+  <circle cx="86" cy="30" r="2" fill="${c2}"/>
+  <circle cx="86" cy="72" r="2" fill="${c1}"/>
+  <circle cx="50" cy="92" r="2" fill="${c2}"/>
+  <circle cx="14" cy="72" r="2" fill="${c1}"/>
+  <circle cx="14" cy="30" r="2" fill="${c2}"/>
+</svg>`
+  },
+
+  'quantum-fold': {
+    id: 'quantum-fold',
+    name: 'Quantum Möbius Fold',
+    description: 'Dynamic origami Möbius ribbon with continuous folding geometry and hidden JK cadence',
+    svg: (c1 = '#22d3ee', c2 = '#8b5cf6') => `
+<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="qf-grad1" x1="10" y1="10" x2="90" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="${c1}"/>
+      <stop offset="50%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="${c2}"/>
+    </linearGradient>
+    <linearGradient id="qf-grad2" x1="90" y1="10" x2="10" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ec4899"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Hexagonal Shield Backplate -->
+  <polygon points="50,8 86,22 86,64 50,92 14,64 14,22" stroke="url(#qf-grad1)" stroke-width="1.5" stroke-opacity="0.3" fill="#090d16"/>
+
+  <!-- Continuous Origami Ribbon Topology (Subtle JK Silhouette) -->
+  <!-- Segment 1: Descending Left Hook Ribbon ('J' sweep) -->
+  <path d="M50 16L24 28V60L50 78V66L34 54V36L50 26V16Z" fill="url(#qf-grad1)"/>
+
+  <!-- Segment 2: Central Crossover Fold with Negative Space Window -->
+  <polygon points="50,26 66,36 50,46 34,36" fill="#0f172a" stroke="${c1}" stroke-width="1"/>
+
+  <!-- Segment 3: Upper Diagonal Chevron Wing (Upper 'K' arm) -->
+  <polygon points="50,46 76,28 84,34 58,52" fill="url(#qf-grad2)"/>
+
+  <!-- Segment 4: Lower Diagonal Chevron Wing (Lower 'K' arm) -->
+  <polygon points="50,46 58,52 84,68 76,74" fill="url(#qf-grad1)"/>
+
+  <!-- Terminal Optical Fold Core -->
+  <polygon points="50,46 58,52 50,58 42,52" fill="#ffffff" fill-opacity="0.85"/>
+  <circle cx="50" cy="52" r="1.5" fill="#090d16"/>
+</svg>`
+  },
+
+  'neon-prism': {
+    id: 'neon-prism',
+    name: 'Neon Prism Hex-Shield',
+    description: 'Negative space geometric hexagon divided by neon energy fissures into abstract JK silhouettes',
+    svg: (c1 = '#22d3ee', c2 = '#ec4899') => `
+<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="np-glow" x1="14" y1="14" x2="86" y2="86" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="${c1}"/>
+      <stop offset="100%" stop-color="${c2}"/>
+    </linearGradient>
+    <filter id="np-bloom" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Outer Neon Polygonal Rim -->
+  <polygon points="50,8 86,22 86,64 50,92 14,64 14,22" stroke="url(#np-glow)" stroke-width="2" fill="#090d16" filter="url(#np-bloom)"/>
+  <polygon points="50,8 86,22 86,64 50,92 14,64 14,22" stroke="#ffffff" stroke-width="1" stroke-opacity="0.5" fill="none"/>
+
+  <!-- Monolithic Segment 1 (Left Block - Subtly forming an abstract 'J' silhouette) -->
+  <path d="M46 16L20 28V60L46 76V64L30 54V34L46 25V16Z" fill="${c1}" fill-opacity="0.9"/>
+
+  <!-- Monolithic Segment 2 (Upper Right Fin - Subtly forming the upper arm of 'K') -->
+  <polygon points="54,20 80,32 80,44 54,32" fill="${c2}" fill-opacity="0.9"/>
+
+  <!-- Monolithic Segment 3 (Lower Right Fin - Subtly forming the lower arm of 'K') -->
+  <polygon points="54,40 80,52 80,64 54,76" fill="url(#np-glow)"/>
+
+  <!-- Central Optical Spine Diamond -->
+  <polygon points="50,34 54,38 50,42 46,38" fill="#ffffff"/>
+  <polygon points="50,54 54,58 50,62 46,58" fill="#ffffff"/>
+
+  <!-- Ambient Micro Dots -->
+  <circle cx="50" cy="8" r="2.5" fill="#ffffff"/>
+  <circle cx="50" cy="92" r="2.5" fill="${c1}"/>
 </svg>`
   },
 
   'minimal-seal': {
     id: 'minimal-seal',
-    name: 'Minimalist Seal',
-    description: 'Clean minimalist circular geometric seal with modern precision typography',
+    name: 'Minimalist Monoline Knot',
+    description: 'Precision circular seal featuring an unbroken continuous-stroke geometric monoline knot',
     svg: (c1 = '#22d3ee', c2 = '#8b5cf6') => `
 <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="ms-grad" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+    <linearGradient id="ms-neon" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="${c1}"/>
       <stop offset="100%" stop-color="${c2}"/>
     </linearGradient>
   </defs>
 
-  <!-- Outer Precision Dashed Ring -->
-  <circle cx="50" cy="50" r="44" stroke="url(#ms-grad)" stroke-width="1.5" stroke-dasharray="2 6"/>
+  <!-- Outer Precision Dashed Orbital Ring -->
+  <circle cx="50" cy="50" r="44" stroke="url(#ms-neon)" stroke-width="1.2" stroke-dasharray="2 6"/>
 
-  <!-- Inner Solid Precision Border -->
-  <circle cx="50" cy="50" r="38" stroke="${c1}" stroke-width="2" fill="#090d16"/>
+  <!-- Inner High-Tech Frame -->
+  <circle cx="50" cy="50" r="38" stroke="#334155" stroke-width="1.5" fill="#090d16"/>
 
-  <!-- Cardinal Precision Coordinate Ticks -->
-  <line x1="50" y1="2" x2="50" y2="8" stroke="${c1}" stroke-width="2"/>
-  <line x1="50" y1="92" x2="50" y2="98" stroke="${c1}" stroke-width="2"/>
-  <line x1="2" y1="50" x2="8" y2="50" stroke="${c1}" stroke-width="2"/>
-  <line x1="92" y1="50" x2="98" y2="50" stroke="${c1}" stroke-width="2"/>
+  <!-- Cardinal Coordinate Hash Marks -->
+  <line x1="50" y1="2" x2="50" y2="7" stroke="${c1}" stroke-width="2"/>
+  <line x1="50" y1="93" x2="50" y2="98" stroke="${c1}" stroke-width="2"/>
+  <line x1="2" y1="50" x2="7" y2="50" stroke="${c1}" stroke-width="2"/>
+  <line x1="93" y1="50" x2="98" y2="50" stroke="${c1}" stroke-width="2"/>
 
-  <!-- Precision Monogram JK -->
-  <!-- J -->
-  <path d="M33 34H43V55C43 62 38 66 31 66C26 66 23 63 23 59H29C29 60.5 30 61.5 31.5 61.5C34 61.5 35.5 59.5 35.5 55V40H33V34Z" fill="${c1}"/>
-  <!-- K -->
-  <path d="M51 34H58.5V47.5L68 34H77L64.5 50L78 66H69L58.5 52.5V66H51V34Z" fill="${c2}"/>
+  <!-- Unbroken Continuous Geometric Monoline Knot (Abstract JK Path) -->
+  <!-- Left Descending Loop ('J' movement) and Interlocking Angled Chevron ('K' movement) -->
+  <path d="M42 24H32V56C32 63 36 67 43 67C47 67 50 64 50 60V38L68 24M50 48L70 66"
+        stroke="url(#ms-neon)"
+        stroke-width="3.6"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
 
-  <!-- Central Diamond Intersection Node -->
-  <polygon points="50,47 53,50 50,53 47,50" fill="#ffffff"/>
+  <!-- Interlocking Central Tech Crosshair & Accents -->
+  <circle cx="50" cy="38" r="2" fill="#ffffff"/>
+  <circle cx="50" cy="60" r="2" fill="#ffffff"/>
+  <circle cx="68" cy="24" r="2" fill="${c1}"/>
+  <circle cx="70" cy="66" r="2" fill="${c2}"/>
 </svg>`
   },
 };
@@ -307,16 +345,16 @@ export function renderBrandLogo(containerEl, logoConfig = {}) {
   const isCustom = logoConfig.preset === 'custom' && logoConfig.custom_url;
 
   if (isCustom) {
-    containerEl.innerHTML = `<img src="${logoConfig.custom_url}" alt="Jai Kiran Brand Monogram" style="width:100%;height:100%;object-fit:contain;border-radius:8px;display:block">`;
+    containerEl.innerHTML = `<img src="${logoConfig.custom_url}" alt="Brand Emblem" style="width:100%;height:100%;object-fit:contain;border-radius:8px;display:block">`;
   } else {
     const preset = logoConfig.preset || 'hex-ribbon';
     const svgStr = getLogoSvg(preset, logoConfig);
     containerEl.innerHTML = svgStr;
   }
 
-  // Set accessibility label and title
+  // Set accessibility label
   containerEl.setAttribute('role', 'img');
-  containerEl.setAttribute('aria-label', 'Jai Kiran Brand Monogram Logo');
+  containerEl.setAttribute('aria-label', 'Brand Geometric Monogram Logo');
   containerEl.removeAttribute('aria-hidden');
 
   // Sync browser favicon
