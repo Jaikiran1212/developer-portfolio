@@ -314,7 +314,7 @@ export class PortfolioApp {
       pjEl.innerHTML = projects
         .map(
           (p, i) =>
-            `<article class="card tilt pj rv" style="--i:${i}">
+            `<article class="card tilt pj rv" data-slug="${esc(p.slug)}" style="--i:${i}">
               <div class="art g${(i % 3) + 1}">
                 ${
                   p.image_url

@@ -1355,6 +1355,18 @@ section {
 .art.g2 { background: linear-gradient(135deg, #be123c, #f59e0b); }
 .art.g3 { background: linear-gradient(135deg, #065f46, #22d3ee); }
 
+/* DLX Sudoku Solver Banner - contain full diagram & title without cropping */
+.pj[data-slug="dlx-sudoku"] .art,
+.art:has(img[src*="dlx"]) {
+  background: #090d16;
+}
+
+.pj[data-slug="dlx-sudoku"] .art img,
+.art img[src*="dlx"] {
+  object-fit: contain;
+  object-position: center;
+}
+
 .star {
   position: absolute;
   top: 12px;
