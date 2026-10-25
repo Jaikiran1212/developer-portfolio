@@ -80,6 +80,12 @@ export const memoryStore = {
       autoCutout: true,
       cutoutTolerance: 38,
     },
+    logo_config: {
+      preset: 'hex-ribbon',
+      custom_url: '',
+      primary_color: '#22d3ee',
+      secondary_color: '#8b5cf6',
+    },
     updated_at: new Date().toISOString(),
   },
   projects: [

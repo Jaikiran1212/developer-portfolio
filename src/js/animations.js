@@ -116,37 +116,58 @@ export function initConstellationCanvas(canvasId = '#bgCanvas') {
 }
 
 /**
- * Scramble text hacker decoding animation
+ * Scramble text cyber glyph hacker decoding animation
+ * Supports numbered prefixes (.pfx) and triggers staggered 3D character wave flips
  */
 const GLYPHS = '01/<>#*✦_~';
+
 export function scrambleText(el) {
   if (!el) return;
-  const final = el.dataset.f || (el.dataset.f = el.textContent);
+
+  // Check for prefix span (.pfx) like '01 //'
+  const pfxEl = el.querySelector('.pfx');
+  const pfxText = pfxEl ? pfxEl.textContent.trim() : '';
+
+  // Extract raw text to decode
+  const fullRaw = el.dataset.rawText || (el.dataset.rawText = el.textContent.trim());
+  const textToDecode = pfxText && fullRaw.startsWith(pfxText)
+    ? fullRaw.slice(pfxText.length).trim()
+    : (pfxEl ? el.textContent.replace(pfxEl.textContent, '').trim() : fullRaw);
+
   const t0 = performance.now();
+  const duration = 650; // ms
 
   function step(now) {
-    const progress = Math.min(1, (now - t0) / 700);
-    el.textContent = [...final]
-      .map((c, i) =>
-        c === ' ' || i < progress * final.length
-          ? c
-          : GLYPHS[Math.floor(Math.random() * GLYPHS.length)]
-      )
+    const progress = Math.min(1, (now - t0) / duration);
+    const decodedLen = Math.floor(progress * textToDecode.length);
+
+    const scrambled = [...textToDecode]
+      .map((c, i) => {
+        if (c === ' ') return ' ';
+        if (i < decodedLen) return c;
+        return GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+      })
       .join('');
 
+    const prefixHtml = pfxText ? `<span class="pfx">${pfxText}</span> ` : '';
+
     if (progress < 1) {
+      el.innerHTML = prefixHtml + scrambled;
       requestAnimationFrame(step);
     } else {
-      el.innerHTML = [...final]
+      // Completed decode: wrap characters in .fc for staggered 3D wave flip
+      const flipChars = [...textToDecode]
         .map((c, i) => `<span class="fc" style="--i:${i}">${c === ' ' ? '&nbsp;' : c}</span>`)
         .join('');
+      el.innerHTML = prefixHtml + flipChars;
     }
   }
+
   requestAnimationFrame(step);
 }
 
 /**
- * Typewriter ticker effect with blinking cursor
+ * Typewriter ticker effect with leading-edge cyber glyph flash and flowing gradient text
  */
 export function startTypewriter(el, phrases) {
   if (!el || !phrases || phrases.length === 0) return;
@@ -161,22 +182,28 @@ export function startTypewriter(el, phrases) {
 
     charIdx += isDeleting ? -1 : 1;
     const displayed = current.slice(0, charIdx);
-    const cursor = `<b class="gf">${GLYPHS[Math.floor(Math.random() * GLYPHS.length)]}</b>`;
 
-    el.innerHTML =
-      displayed +
-      (!isDeleting && charIdx < current.length ? cursor : '') +
-      '<i></i>';
+    // Leading-edge cyber glyph flash on each typed character
+    const randomGlyph = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+    const glyphFlash = !isDeleting && charIdx < current.length
+      ? `<span class="typ-flash gf" aria-hidden="true">${randomGlyph}</span>`
+      : '';
 
-    let delay = isDeleting ? 35 : 70;
+    el.innerHTML = `
+      <span class="typ-txt">${displayed}</span>
+      ${glyphFlash}
+      <i class="typ-cursor" aria-hidden="true"></i>
+    `;
+
+    let delay = isDeleting ? 32 : 68;
 
     if (!isDeleting && charIdx === current.length) {
       isDeleting = true;
-      delay = 1400; // Hold at full text
+      delay = 1800; // Hold at full text
     } else if (isDeleting && charIdx === 0) {
       isDeleting = false;
       phraseIdx++;
-      delay = 350; // Pause before typing next
+      delay = 380; // Pause before typing next
     }
 
     setTimeout(tick, delay);

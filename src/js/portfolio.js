@@ -4,6 +4,7 @@
 import { apiClient } from './api-client.js';
 import { ICONS, SOCIAL_ICONS, SOCIAL_GLOW, DEFAULT_PORTFOLIO_DATA } from './data-default.js';
 import { startTypewriter, scrambleText, burstConfetti } from './animations.js';
+import { renderBrandLogo, syncBrowserFavicon, LOGO_PRESETS } from './brand-logo.js';
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
@@ -12,8 +13,8 @@ const $$ = (s) => document.querySelectorAll(s);
 export const esc = (s) =>
   String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-// Typography Presets
-const FONT_PRESETS = {
+// Typography Presets (Google Fonts Suite)
+export const FONT_PRESETS = {
   'Cyber Geometric': ['Syne', 'JetBrains Mono', 'Instrument Serif'],
   'Editorial Tech': ['Space Grotesk', 'JetBrains Mono', 'Instrument Serif'],
   'Ultra Modern': ['Outfit', 'Fira Code', 'Instrument Serif'],
@@ -84,9 +85,10 @@ export class PortfolioApp {
   applyFont(fontName) {
     const fonts = FONT_PRESETS[fontName] || FONT_PRESETS['Cyber Geometric'];
     const style = document.documentElement.style;
-    style.setProperty('--d', `'${fonts[0]}', 'Arial Black', sans-serif`);
-    style.setProperty('--m', `'${fonts[1]}', ui-monospace, monospace`);
+    style.setProperty('--d', `'${fonts[0]}', sans-serif`);
+    style.setProperty('--m', `'${fonts[1]}', monospace`);
     style.setProperty('--s', `'${fonts[2]}', Georgia, serif`);
+    style.setProperty('--b', "'Manrope', system-ui, -apple-system, sans-serif");
   }
 
   applyTheme(themeName) {
@@ -135,7 +137,13 @@ export class PortfolioApp {
     this.applyFont(profile.font_preset);
     this.applyTheme(profile.theme);
 
-    // 1. Hero Greeting & Animated Name
+    // Customizable Brand Logo System (.mono) & Auto-Favicon Sync
+    const brandLogoEl = $('#brandLogo') || $('.mono');
+    if (brandLogoEl) {
+      renderBrandLogo(brandLogoEl, profile.logo_config || { preset: 'hex-ribbon' });
+    }
+
+    // 1. Hero Greeting: Staggered character wave entrance with glowing underline sweep
     const greetEl = $('#greet');
     if (greetEl) {
       greetEl.innerHTML = [...profile.greet]
@@ -143,6 +151,7 @@ export class PortfolioApp {
         .join('');
     }
 
+    // Hero Name: 3D perspective drop-in, continuous sine levitation, iridescent shimmer, rubber-band hover
     const nameEl = $('#nm');
     if (nameEl) {
       const words = profile.name.split(' ');
@@ -150,13 +159,13 @@ export class PortfolioApp {
         .map(
           (w, k) =>
             '<span class="br">' +
-            [...w].map((c, i) => `<span class="c" style="--i:${i + k * 4}">${esc(c)}</span>`).join('') +
+            [...w].map((c, i) => `<span class="c" style="--i:${i + k * 5}">${esc(c)}</span>`).join('') +
             '</span>'
         )
-        .join('');
+        .join(' ');
     }
 
-    // Rotating Typewriter Subtitles
+    // Rotating Typewriter Subtitles with leading-edge cyber glyph flash
     const typEl = $('#typ');
     if (typEl && profile.subs) {
       startTypewriter(typEl, profile.subs);
@@ -186,11 +195,16 @@ export class PortfolioApp {
         .join('');
     }
 
-    // 3. About Me Lead Sentence
+    // 3. About Me Lead Sentence: Word-by-word blur-to-crisp reveal & editorial serif keyword highlights
     const leadEl = $('#ld');
     if (leadEl) {
+      let rawBio = profile.lead_bio ||
+        `“Computer Science & Engineering student at |Amrita Vishwa Vidyapeetham| with hands-on experience in |web development|, interactive |algorithmic visualizers|, and |cybersecurity| incident analysis.”`;
+      if (!rawBio.includes('|')) {
+        rawBio = rawBio.replace(/(Amrita Vishwa Vidyapeetham|web development|algorithmic visualizers|cybersecurity|full-stack|software engineering)/gi, '|$1|');
+      }
       let wordIdx = 0;
-      leadEl.innerHTML = `“Computer Science & Engineering student at |Amrita Vishwa Vidyapeetham| with hands-on experience in |web development|, interactive |algorithmic visualizers|, and |cybersecurity| incident analysis.”`
+      leadEl.innerHTML = rawBio
         .split('|')
         .map((chunk, j) =>
           chunk.replace(
@@ -518,6 +532,22 @@ export class PortfolioApp {
         this.applyTheme(nextTheme);
         this.showToast(`Theme: ${nextTheme}`);
       };
+    }
+
+    // Framed Section Header hover interaction (triggers cyber glyph decode + 3D flip)
+    $$('.fr').forEach((frEl) => {
+      frEl.addEventListener('mouseenter', () => {
+        const b = frEl.querySelector('b');
+        if (b) scrambleText(b);
+      });
+    });
+
+    // Brand Logo click to smooth-scroll to top
+    const brandLogo = $('#brandLogo') || $('.mono');
+    if (brandLogo) {
+      brandLogo.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
     }
 
     // Scroll Progress & Nav Background

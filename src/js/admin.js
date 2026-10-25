@@ -4,7 +4,8 @@
 // ==============================================================================
 import { apiClient } from './api-client.js';
 import { ICONS, SOCIAL_ICONS, DEFAULT_PORTFOLIO_DATA } from './data-default.js';
-import { esc } from './portfolio.js';
+import { esc, FONT_PRESETS } from './portfolio.js';
+import { LOGO_PRESETS, getLogoSvg, syncBrowserFavicon, renderBrandLogo } from './brand-logo.js';
 
 const $ = (s) => document.querySelector(s);
 
@@ -1132,10 +1133,16 @@ export class AdminCMS {
         <label for="pf-resume">Resume URL (Google Drive / PDF)</label>
         <input id="pf-resume" name="resume_url" value="${esc(p.resume_url)}">
 
-        <label for="pf-font">Typography Style Preset</label>
+        <label for="pf-font">Typography Style Preset (Google Fonts Suite)</label>
         <select id="pf-font" name="font_preset">
           ${['Cyber Geometric', 'Editorial Tech', 'Ultra Modern', 'Brutalist Neo', 'Minimalist Geometric']
-            .map((f) => `<option ${f === p.font_preset ? 'selected' : ''}>${f}</option>`)
+            .map((f) => `<option value="${f}" ${f === p.font_preset ? 'selected' : ''}>${f} – ${
+              f === 'Cyber Geometric' ? 'Syne (Headlines) / JetBrains Mono (Tech) / Instrument Serif' :
+              f === 'Editorial Tech' ? 'Space Grotesk (Headlines) / JetBrains Mono (Tech) / Instrument Serif' :
+              f === 'Ultra Modern' ? 'Outfit (Headlines) / Fira Code (Tech) / Instrument Serif' :
+              f === 'Brutalist Neo' ? 'Syne (Headlines) / Fira Code (Tech) / Instrument Serif' :
+              'Outfit (Headlines) / JetBrains Mono (Tech) / Instrument Serif'
+            }</option>`)
             .join('')}
         </select>
 
@@ -1146,11 +1153,177 @@ export class AdminCMS {
             .join('')}
         </select>
 
+        <!-- BRAND LOGO SYSTEM & AUTO-FAVICON -->
+        <div class="dash-card" style="margin:24px 0;padding:20px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.12);border-radius:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:14px">
+            <div>
+              <h4 style="margin:0;font:800 1.15rem var(--d);display:flex;align-items:center;gap:8px">
+                <span style="color:#22d3ee">✦</span> Brand Logo System &amp; Auto-Favicon (.mono)
+              </h4>
+              <p style="margin:4px 0 0;font-size:0.85rem;color:#94a3b8">
+                Defaults to the interlocking hexagonal geometric ribbon monogram (JK) inspired by Tomasz Gajda. Choose from 5 vector presets or upload a custom PNG/SVG with real-time browser tab favicon syncing.
+              </p>
+            </div>
+            <!-- Live Browser Tab Favicon Preview -->
+            <div style="display:flex;align-items:center;gap:10px;background:#090d16;padding:8px 14px;border-radius:8px;border:1px solid #334155">
+              <span style="font-size:0.75rem;color:#94a3b8">Browser Tab Favicon:</span>
+              <div id="tab-fav-preview" style="width:20px;height:20px;display:flex;align-items:center;justify-content:center"></div>
+              <span style="font-size:0.8rem;font-weight:600;color:#e2e8f0;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                Jai Kiran – Portfolio
+              </span>
+            </div>
+          </div>
+
+          <!-- 5 Built-in Vector Presets Grid -->
+          <label style="font-weight:700;display:block;margin-bottom:8px">5 Built-in Geometric Vector Presets:</label>
+          <div id="logo-presets-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:12px;margin-bottom:18px"></div>
+
+          <!-- Custom PNG / SVG Upload Section -->
+          <div style="background:rgba(15,23,42,0.6);padding:14px;border-radius:8px;border:1px dashed #334155">
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+              <label style="margin:0;cursor:pointer;display:flex;align-items:center;gap:6px">
+                <input type="radio" id="logo-mode-preset" name="logo_mode" value="preset" ${p.logo_config?.preset !== 'custom' ? 'checked' : ''}>
+                <span>Use Vector Preset</span>
+              </label>
+              <label style="margin:0;cursor:pointer;display:flex;align-items:center;gap:6px">
+                <input type="radio" id="logo-mode-custom" name="logo_mode" value="custom" ${p.logo_config?.preset === 'custom' ? 'checked' : ''}>
+                <span>Custom PNG / SVG Upload</span>
+              </label>
+            </div>
+
+            <div id="custom-logo-controls" style="${p.logo_config?.preset === 'custom' ? 'display:block' : 'display:none'};margin-top:14px">
+              <label for="pf-logo-file">Upload Logo File (.svg, .png, .webp):</label>
+              <input type="file" id="pf-logo-file" accept=".svg,.png,.webp,.jpg,.jpeg">
+
+              <label for="pf-logo-url" style="margin-top:10px">Or Image / SVG Data URL:</label>
+              <input id="pf-logo-url" value="${esc(p.logo_config?.custom_url || '')}" placeholder="https://... or data:image/png;base64,...">
+            </div>
+          </div>
+        </div>
+
         <div style="margin-top:20px">
           <button type="submit" class="btn primary">Save All Changes</button>
         </div>
       </form>
     `;
+
+    // Local logo state
+    const logoState = {
+      preset: p.logo_config?.preset || 'hex-ribbon',
+      custom_url: p.logo_config?.custom_url || '',
+      primary_color: p.logo_config?.primary_color || '#22d3ee',
+      secondary_color: p.logo_config?.secondary_color || '#8b5cf6',
+    };
+
+    const renderPresetsGrid = () => {
+      const grid = $('#logo-presets-grid');
+      if (!grid) return;
+      grid.innerHTML = Object.values(LOGO_PRESETS)
+        .map((preset) => {
+          const isSelected = logoState.preset === preset.id;
+          return `
+            <div class="logo-preset-card" data-preset="${preset.id}" style="border:2px solid ${isSelected ? '#22d3ee' : 'rgba(255,255,255,0.1)'};border-radius:10px;padding:12px;background:${isSelected ? 'rgba(34,211,238,0.12)' : 'rgba(15,23,42,0.8)'};cursor:pointer;text-align:center;transition:all 0.25s">
+              <div style="width:48px;height:48px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center">
+                ${preset.svg(logoState.primary_color, logoState.secondary_color)}
+              </div>
+              <div style="font-weight:700;font-size:0.8rem;color:#e2e8f0">${preset.name}</div>
+              <div style="font-size:0.7rem;color:#94a3b8;margin-top:2px">${preset.isDefault ? '<span style="color:#22d3ee;font-weight:700">★ Default (JK)</span>' : 'Vector Preset'}</div>
+            </div>
+          `;
+        })
+        .join('');
+
+      grid.querySelectorAll('.logo-preset-card').forEach((card) => {
+        card.onclick = () => {
+          logoState.preset = card.dataset.preset;
+          const presetRadio = $('#logo-mode-preset');
+          if (presetRadio) presetRadio.checked = true;
+          const customControls = $('#custom-logo-controls');
+          if (customControls) customControls.style.display = 'none';
+          renderPresetsGrid();
+          updateFaviconPreview();
+        };
+      });
+    };
+
+    const updateFaviconPreview = () => {
+      const favEl = $('#tab-fav-preview');
+      if (!favEl) return;
+      if (logoState.preset === 'custom' && logoState.custom_url) {
+        favEl.innerHTML = `<img src="${logoState.custom_url}" alt="Favicon" style="width:18px;height:18px;object-fit:contain">`;
+      } else {
+        favEl.innerHTML = getLogoSvg(logoState.preset, logoState);
+        const svg = favEl.querySelector('svg');
+        if (svg) {
+          svg.setAttribute('width', '18');
+          svg.setAttribute('height', '18');
+        }
+      }
+      syncBrowserFavicon(logoState);
+    };
+
+    renderPresetsGrid();
+    updateFaviconPreview();
+
+    const modePreset = $('#logo-mode-preset');
+    if (modePreset) {
+      modePreset.onchange = () => {
+        if (logoState.preset === 'custom') {
+          logoState.preset = 'hex-ribbon';
+        }
+        const customControls = $('#custom-logo-controls');
+        if (customControls) customControls.style.display = 'none';
+        renderPresetsGrid();
+        updateFaviconPreview();
+      };
+    }
+
+    const modeCustom = $('#logo-mode-custom');
+    if (modeCustom) {
+      modeCustom.onchange = () => {
+        logoState.preset = 'custom';
+        const customControls = $('#custom-logo-controls');
+        if (customControls) customControls.style.display = 'block';
+        renderPresetsGrid();
+        updateFaviconPreview();
+      };
+    }
+
+    const logoUrlInput = $('#pf-logo-url');
+    if (logoUrlInput) {
+      logoUrlInput.oninput = (e) => {
+        logoState.preset = 'custom';
+        logoState.custom_url = e.target.value.trim();
+        updateFaviconPreview();
+      };
+    }
+
+    const logoFileInput = $('#pf-logo-file');
+    if (logoFileInput) {
+      logoFileInput.onchange = (ev) => {
+        const file = ev.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          logoState.preset = 'custom';
+          logoState.custom_url = reader.result;
+          if (logoUrlInput) logoUrlInput.value = reader.result;
+          if (modeCustom) modeCustom.checked = true;
+          const customControls = $('#custom-logo-controls');
+          if (customControls) customControls.style.display = 'block';
+          renderPresetsGrid();
+          updateFaviconPreview();
+        };
+        reader.readAsDataURL(file);
+      };
+    }
+
+    const fontSelect = $('#pf-font');
+    if (fontSelect) {
+      fontSelect.onchange = (e) => {
+        this.app.applyFont(e.target.value);
+      };
+    }
 
     // Local photo state
     const studioConfig = { ...c };
@@ -1230,11 +1403,12 @@ export class AdminCMS {
         font_preset: f.get('font_preset'),
         theme: f.get('theme'),
         photo_config: studioConfig,
+        logo_config: logoState,
       };
 
       try {
         await apiClient.updateProfile(payload);
-        this.showToast('Profile updated successfully.');
+        this.showToast('Profile and Brand Logo updated successfully.');
         await this.app.init();
       } catch (err) {
         this.showToast(err.message, true);

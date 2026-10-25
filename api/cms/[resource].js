@@ -485,6 +485,9 @@ export default async function handler(req, res) {
         photo_config: typeof body.photo_config === 'object' && body.photo_config !== null
           ? body.photo_config
           : memoryStore.profile.photo_config,
+        logo_config: typeof body.logo_config === 'object' && body.logo_config !== null
+          ? body.logo_config
+          : (memoryStore.profile.logo_config || { preset: 'hex-ribbon' }),
         updated_at: new Date().toISOString(),
       };
 
