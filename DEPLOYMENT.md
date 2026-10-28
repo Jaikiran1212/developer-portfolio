@@ -75,13 +75,10 @@ To adhere strictly to zero-trust security standards:
    - **Framework Preset:** Vite
    - **Build Command:** `npm run build`
    - **Output Directory:** `dist`
-5. Expand **Environment Variables** and add the following:
-   | Key | Value | Description |
-   | :--- | :--- | :--- |
-   | `VITE_SUPABASE_URL` | `https://your-project.supabase.co` | Supabase Project URL |
-   | `VITE_SUPABASE_ANON_KEY` | `eyJhbGciOi...` | Supabase Anon Public Key |
-   | `SUPABASE_SERVICE_ROLE_KEY` | `eyJhbGciOi...` | Supabase Service Role Secret (Server-Only) |
-   | `ADMIN_EMAILS` | `jaikiranjp@gmail.com` | Comma-separated authorized admin emails |
+5. Expand **Environment Variables** and add everything in `.env.example` (see that file for the full, commented list).
+   **Required:** `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_EMAILS`, `IP_HASH_SALT`.
+   **Recommended:** `UPSTASH_REDIS_REST_URL/TOKEN` (shared rate limits), `RESEND_API_KEY` + `CONTACT_NOTIFY_EMAIL` (new-message e-mails), optional Turnstile keys.
+   Set them for **Production AND Preview**. If they are missing, the API now answers `503` (it fails closed) instead of letting anyone in.
 6. Click **Deploy**. Vercel will build the frontend into `dist/` and configure the `/api` serverless endpoints.
 
 ### Method B: Deploy via Vercel CLI (No sudo needed)
@@ -108,14 +105,21 @@ npx vercel --prod
 
 ## 5. Security Checklist & Verification
 
-- [x] **Hardcoded PIN Removed:** Legacy PIN check (`1212`) and `localStorage` bypass eliminated.
-- [x] **Authentication:** Supabase Auth password verification with session management.
-- [x] **Explicit Authorization:** User must exist in `admin_users` table to perform CMS mutations.
-- [x] **Database Isolation:** PostgreSQL Row Level Security denies public access to `messages` and `audit_logs`.
-- [x] **Input Sanitization:** Stored XSS defense using server-side HTML entity escaping.
-- [x] **Abuse Protection:** Sliding window rate limiting on contact submissions (5 per 15 min) and logins (5 per 15 min).
-- [x] **Anti-Spam:** Honeypot field traps automated bots silently without saving spam.
-- [x] **Auditing:** Administrative actions are logged to `audit_logs` without recording passwords or secrets.
-- [x] **Headers:** CSP, X-Frame-Options (`DENY`), and nosniff configured in `vercel.json`.
-- [x] **Vercel Hobby Plan Compatible:** Consolidated into 4 dynamic serverless functions (`api/auth/[action].js`, `api/cms/[resource].js`, `api/contact.js`, `api/portfolio.js`), well under the 12-function Hobby plan limit.
-- [x] **Offline Resilience:** If Supabase is unreachable or credentials are not yet set, the portfolio seamlessly falls back to pre-seeded static data so it never displays a blank error page.
+- [x] **Fail-closed auth:** no Supabase config = `503`, never an open login. The offline dev login exists only when `ALLOW_DEV_AUTH=1` AND the code is not on Vercel.
+- [x] **Sessions:** HttpOnly + SameSite=Strict cookies (not readable by page scripts) with automatic refresh; CSRF header required for cookie-authenticated writes.
+- [x] **Password reset:** uses only Supabase's e-mailed code (`verifyOtp`); no code is ever returned in a response; only administrators can reset.
+- [x] **Explicit Authorization:** user must be in `admin_users` (or `ADMIN_EMAILS` with a confirmed e-mail).
+- [x] **Database Isolation:** Row Level Security denies public access to `messages` and `audit_logs`.
+- [x] **Output encoding:** text is stored raw and escaped only when rendered (no double-escaping). Custom SVG icons are validated on the server and sanitised in the browser; all URL fields accept only http(s)/mailto/tel.
+- [x] **Abuse Protection:** shared rate limiting (Upstash) + optional Cloudflare Turnstile + honeypot.
+- [x] **Contact messages are never silently lost:** a database failure returns an error with your fallback e-mail; new messages trigger Resend/Telegram notifications.
+- [x] **Auditing:** admin actions are logged to `audit_logs` without secrets.
+- [x] **Headers:** strict CSP (no inline scripts), HSTS, X-Frame-Options `DENY`, nosniff.
+- [x] **Admin on its own page:** `/admin` (noindex, no-store) is a separate bundle - public visitors never download the CMS.
+
+### One-time steps after deploying this version
+1. **Supabase -> Authentication -> Providers -> Email:** turn **off "Allow new users to sign up"** (and keep "Confirm email" on).
+2. **Supabase -> Authentication -> Email Templates:** make the *Reset Password* and *Magic Link* templates show the 6-digit code with `{{ .Token }}` (the reset flow asks for that code).
+3. Run `supabase/fix-double-escape.sql` once (repairs text that was saved as `&#x27;` / `&amp;`).
+4. Rotate the Vercel token that was inside `.env.local` (`vercel logout` then `vercel login`) and do not zip/share `.env.local`, `.vercel/` or `node_modules/`.
+5. In **Admin -> Profile -> Photo Studio** set the photo to width 520 / height 620 if you want the larger hero portrait (new installs get it automatically).

@@ -17,22 +17,33 @@
   <meta property="og:url" content="https://jaikiran-portfolio.vercel.app/">
   <meta property="og:title" content="Jai Kiran – Full-Stack Developer &amp; Cybersecurity Enthusiast">
   <meta property="og:description" content="Explore interactive algorithm visualizers, responsive web projects, and cybersecurity incident simulations by Jai Kiran.">
-  <meta property="og:image" content="https://jaikiran-portfolio.vercel.app/images/profile.png">
+  <meta property="og:image" content="https://jaikiran-portfolio.vercel.app/images/og-card.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Jai Kiran - Full-Stack Developer and Cybersecurity Enthusiast">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:url" content="https://jaikiran-portfolio.vercel.app/">
   <meta name="twitter:title" content="Jai Kiran – Full-Stack Developer &amp; Cybersecurity Enthusiast">
   <meta name="twitter:description" content="Explore interactive algorithm visualizers, responsive web projects, and cybersecurity incident simulations by Jai Kiran.">
-  <meta name="twitter:image" content="https://jaikiran-portfolio.vercel.app/images/profile.png">
+  <meta name="twitter:image" content="https://jaikiran-portfolio.vercel.app/images/og-card.png">
+  <meta name="twitter:image:alt" content="Jai Kiran - Full-Stack Developer and Cybersecurity Enthusiast">
 
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 
-  <!-- Modern Google Fonts -->
+  <!-- Fonts: only the default pair is loaded up-front; other presets load on demand -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Space+Grotesk:wght@500;700&family=Outfit:wght@600;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;600;700&family=Fira+Code:wght@500;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=JetBrains+Mono:wght@400;600;700&family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap">
+
+  <!-- Hero image (LCP) -->
+  <link rel="preload" as="image" href="/images/profile.webp" type="image/webp" fetchpriority="high">
+
+  <noscript>
+    <style>.rv, .tier, .ti, .fr { opacity: 1 !important; transform: none !important; } .fr rect { stroke-dashoffset: 0 !important; } .fr b { opacity: 1 !important; letter-spacing: 0.3em !important; } .sk { opacity: 1 !important; transform: none !important; } #bgCanvas { display: none; }</style>
+  </noscript>
 
   <!-- JSON-LD Structured Data Schema -->
   <script type="application/ld+json">
@@ -45,6 +56,8 @@
         "name": "Jai Kiran",
         "url": "https://jaikiran-portfolio.vercel.app/",
         "jobTitle": "Full-Stack Developer & Cybersecurity Enthusiast",
+        "description": "Computer Science & Engineering student building responsive web apps, algorithm visualizers and cybersecurity projects.",
+        "image": "https://jaikiran-portfolio.vercel.app/images/og-card.png",
         "alumniOf": {
           "@type": "CollegeOrUniversity",
           "name": "Amrita Vishwa Vidyapeetham"
@@ -110,14 +123,13 @@
     </button>
 
     <!-- Mobile Navigation Drawer -->
-    <div id="mobNav" aria-label="Mobile Navigation">
+    <nav id="mobNav" aria-label="Mobile Navigation">
       <a href="#about" style="--i:0">About me</a>
       <a href="#skills" style="--i:1">Skills</a>
       <a href="#experience" style="--i:2">Experience</a>
       <a href="#portfolio" style="--i:3">Portfolio</a>
       <a class="pill" href="#contact" style="--i:4">CONTACT ME</a>
-      <a href="#admin" style="--i:5">Admin CMS</a>
-    </div>
+    </nav>
 
     <!-- Hero Section -->
     <header id="hero">
@@ -128,7 +140,8 @@
         <div class="Lc">
           <p class="hi" id="greet"></p>
           <h1 id="nm"></h1>
-          <div id="typ" aria-live="polite"></div>
+          <div id="typ" aria-hidden="true"></div>
+          <p class="sr-only" id="typ-sr">Frontend Developer, Full-Stack Engineer, Cybersecurity Enthusiast</p>
         </div>
         <div class="soc" id="soc" aria-label="Social and coding profiles"></div>
       </div>
@@ -139,7 +152,10 @@
         <div class="fl">
           <div class="gb">
             <div class="arch">
-              <img alt="Portrait photograph of Jai Kiran" src="/images/profile.png" width="400" height="480">
+              <picture>
+                <source srcset="/images/profile.webp" type="image/webp">
+                <img alt="Portrait photograph of Jai Kiran" src="/images/profile.png" width="459" height="620" fetchpriority="high" decoding="async">
+              </picture>
             </div>
           </div>
         </div>
@@ -151,7 +167,7 @@
     </header>
 
     <!-- Scrolling Skills Marquee -->
-    <aside class="mq" aria-label="Skills Marquee"><div id="mq"></div></aside>
+    <aside class="mq" aria-label="Skills Marquee"><div id="mq"><!--SSR--></div></aside>
 
     <main id="main-content">
       <!-- About Me Section -->
@@ -162,8 +178,8 @@
             <b><span class="pfx">01 //</span> ABOUT ME</b>
           </h2>
           <div class="dv rv" aria-hidden="true">— \\\\// —</div>
-          <p class="lead rv" id="ld"></p>
-          <div class="grid" id="pil" aria-label="Core Engineering Pillars"></div>
+          <p class="lead rv" id="ld"><!--SSR--></p>
+          <div class="grid" id="pil" aria-label="Core Engineering Pillars"><!--SSR--></div>
         </div>
       </section>
 
@@ -175,7 +191,7 @@
             <b><span class="pfx">02 //</span> SKILLS</b>
           </h2>
           <div class="dv rv" aria-hidden="true">— \\\\// —</div>
-          <div id="sk"></div>
+          <div id="sk"><!--SSR--></div>
         </div>
       </section>
 
@@ -187,8 +203,9 @@
             <b><span class="pfx">03 //</span> EXPERIENCE &amp; CERTS</b>
           </h2>
           <div class="dv rv" aria-hidden="true">— \\\\// —</div>
+          <p class="sec-note">Virtual job simulations (Forage) and online certifications completed in 2026.</p>
           <div class="tl" id="tl">
-            <div class="fill" id="fill"></div>
+            <div class="fill" id="fill"></div><!--SSR:tl-->
           </div>
         </div>
       </section>
@@ -201,8 +218,9 @@
             <b><span class="pfx">04 //</span> PORTFOLIO</b>
           </h2>
           <div class="dv rv" aria-hidden="true">— \\\\// —</div>
-          <div class="grid" id="pj" aria-label="Featured Projects &amp; Case Studies"></div>
-          <p class="dv rv" style="margin:50px 0 0">
+          <div class="grid" id="pj" aria-label="Featured Projects &amp; Case Studies"><!--SSR--></div>
+          <p class="sec-note" style="margin:36px auto 0">More projects are on <a href="https://github.com/Jaikiran1212" target="_blank" rel="noopener noreferrer">my GitHub</a>.</p>
+          <p class="dv rv" style="margin:30px 0 0">
             | <a class="resume" id="rs" href="#" target="_blank" rel="noopener noreferrer">VIEW RESUME</a> |
           </p>
         </div>
@@ -218,7 +236,7 @@
           <div class="dv rv" aria-hidden="true">— \\\\// —</div>
           <div class="two">
             <div id="ctc" aria-label="Direct contact channels"></div>
-            <form id="cf" class="rv" style="--i:2" aria-label="Send a direct message">
+            <form id="cf" class="rv" style="--i:2" aria-label="Send a direct message" novalidate>
               <!-- Honeypot anti-spam trap (invisible to human visitors) -->
               <div class="hp-trap" aria-hidden="true">
                 <label for="trap-input">Leave this field blank</label>
@@ -226,20 +244,25 @@
               </div>
 
               <label for="cf-name">Your Name *</label>
-              <input id="cf-name" name="name" required autocomplete="name" placeholder="Alex Morgan">
+              <input id="cf-name" name="name" required minlength="2" maxlength="120" autocomplete="name" placeholder="Alex Morgan" aria-describedby="err-name">
+              <span class="field-err" id="err-name" aria-live="polite"></span>
 
               <label for="cf-email">Your Email Address *</label>
-              <input id="cf-email" name="email" type="email" required autocomplete="email" placeholder="alex@company.com">
+              <input id="cf-email" name="email" type="email" required maxlength="255" autocomplete="email" placeholder="alex@company.com" aria-describedby="err-email">
+              <span class="field-err" id="err-email" aria-live="polite"></span>
 
               <label for="cf-subject">Subject *</label>
-              <input id="cf-subject" name="subject" required placeholder="Project Collaboration / Internship Inquiry">
+              <input id="cf-subject" name="subject" required minlength="2" maxlength="200" placeholder="Project Collaboration / Internship Inquiry" aria-describedby="err-subject">
+              <span class="field-err" id="err-subject" aria-live="polite"></span>
 
               <label for="cf-message">Message *</label>
-              <textarea id="cf-message" name="message" rows="5" required placeholder="Hi Jai Kiran, I came across your portfolio and would like to discuss..."></textarea>
+              <textarea id="cf-message" name="message" rows="5" required minlength="5" maxlength="4000" placeholder="Hi Jai Kiran, I came across your portfolio and would like to discuss..." aria-describedby="err-message cf-count"></textarea>
+              <div class="cf-meta"><span class="field-err" id="err-message" aria-live="polite" style="margin:0"></span><span id="cf-count">0 / 4000</span></div>
 
-              <button class="btn primary" type="submit" style="width:100%;margin-top:6px">
-                Send Message
-              </button>
+              <div id="cf-turnstile"></div>
+              <button class="btn primary" type="submit" style="width:100%;margin-top:6px">Send Message</button>
+              <p class="cf-status" id="cf-status" role="status" aria-live="polite"></p>
+              <p class="cf-meta" style="margin-top:4px">I usually reply within 24–48 hours.</p>
             </form>
           </div>
         </div>
@@ -248,15 +271,12 @@
 
     <!-- Semantic Footer -->
     <footer>
-      <p>© 2026 Jai Kiran · Computer Science &amp; Engineering · <a href="#admin">Admin CMS</a></p>
+      <p>© 2026 Jai Kiran · Computer Science &amp; Engineering</p>
     </footer>
   </div>
 
-  <!-- Admin CMS Container -->
-  <div id="adm" aria-label="Admin Content Management System"></div>
-
   <!-- Global Toast Alert Container -->
-  <div id="toast" role="alert" aria-live="assertive"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
 
   <!-- Client Application Script -->
   <script type="module" src="/src/main.js"></script>

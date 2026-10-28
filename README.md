@@ -58,7 +58,7 @@ A production-ready, security-hardened, and responsive developer portfolio featur
   - *CampusWatch: Campus Infrastructure Anomaly & Incident Management* (Cloud Firestore RBAC, real-time reporting, and query indexing).
 - **Contact Channel:** Validated contact form with sliding window rate limiting, honeypot spam traps, instant toast alerts, and confetti celebration animation.
 
-### 2. Upgraded Admin CMS (`/#admin`)
+### 2. Upgraded Admin CMS (`/admin`)
 The insecure legacy PIN (`1212`) and `localStorage` authentication have been completely replaced with a professional CMS:
 - **Dashboard:** Real-time metrics (Case Studies, Active Skills, Experience Items, Unread Inquiries) and an immutable audit log feed.
 - **Projects Manager:** Create, edit, preview case studies, reorder, toggle published/draft state, and delete.

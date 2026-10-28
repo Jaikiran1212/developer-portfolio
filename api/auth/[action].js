@@ -1,419 +1,225 @@
 // ==============================================================================
-// CONSOLIDATED AUTH ROUTER (api/auth/[action].js)
-// Handles: /api/auth/login, /api/auth/session, /api/auth/logout,
-//          /api/auth/forgot-password, /api/auth/verify-otp
-// Counts as 1 Serverless Function for Vercel Hobby plan
+// AUTH ENDPOINT  (/api/auth/:action)
+// Actions: login | refresh | session | logout | forgot-password | verify-otp
+//
+// Security notes
+//  * Sessions are HttpOnly cookies (access + refresh). Tokens are never returned in JSON.
+//  * Password reset uses ONLY Supabase's own e-mailed OTP (verifyOtp). There is no local
+//    code, no code in any response, and no dev fallback outside explicit local dev mode.
+//  * Only administrators can reset the password; responses never reveal which e-mails exist.
+//  * If Supabase is not configured the endpoint answers 503 (fail CLOSED).
 // ==============================================================================
-import { supabase, hasSupabaseConfig, memoryStore, SUPABASE_URL, SUPABASE_ANON_KEY } from '../_lib/supabase.js';
-import { checkRateLimit, getClientIp } from '../_lib/rate-limiter.js';
-import { cleanString, isValidEmail } from '../_lib/validator.js';
-import { logAuditEvent, verifyAdmin, extractBearerToken } from '../_lib/auth.js';
+import { supabase, hasSupabaseConfig, memoryStore } from '../_lib/supabase.js';
+import {
+  verifyAdmin, authorizeUser, isAdminEmail, logAuditEvent,
+  setSessionCookies, clearSessionCookies, parseCookies, REFRESH_COOKIE,
+} from '../_lib/auth.js';
+import { checkRateLimitShared, getClientIp } from '../_lib/rate-limiter.js';
+import { isValidEmail, cleanString } from '../_lib/validator.js';
+import { verifyTurnstile } from '../_lib/turnstile.js';
+import { isDevAuthAllowed, isConfigAdminEmail } from '../_lib/env.js';
 
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'jaikiranjp@gmail.com')
-  .split(',')
-  .map((e) => e.trim().toLowerCase());
+const MIN_PASSWORD_LENGTH = 12;
+const GENERIC_LOGIN_ERROR = 'Invalid email or password.';
+const GENERIC_RESET_NOTICE = 'If that address belongs to an administrator, a verification code has been sent. Check your inbox.';
+
+const devOtps = new Map(); // local development only (never exposed in a response)
+
+function tooMany(res, rl) {
+  res.setHeader('Retry-After', String(rl.retryAfterSec || 60));
+  return res.status(429).json({ error: `Too many attempts. Please try again in ${Math.ceil((rl.retryAfterSec || 60) / 60)} minute(s).` });
+}
+
+function notConfigured(res) {
+  return res.status(503).json({ error: 'Authentication service is not configured on this deployment.' });
+}
 
 export default async function handler(req, res) {
-  // Parse action and query params from dynamic route param or fallback URL
-  if (req.url && req.url.includes('?')) {
-    try {
-      const urlObj = new URL(req.url, 'http://localhost');
-      req.query = req.query || {};
-      for (const [key, value] of urlObj.searchParams.entries()) {
-        if (req.query[key] === undefined) {
-          req.query[key] = value;
-        }
+  res.setHeader('Cache-Control', 'no-store');
+  const action = String(req.query?.action || '').toLowerCase();
+  const method = req.method;
+  const ip = getClientIp(req);
+  const devMode = !(hasSupabaseConfig && supabase) && isDevAuthAllowed();
+
+  try {
+    // ------------------------------------------------------------------ SESSION
+    if (action === 'session' && method === 'GET') {
+      const auth = await verifyAdmin(req);
+      if (!auth.ok) return res.status(auth.status).json({ authenticated: false, error: auth.error });
+      return res.status(200).json({ authenticated: true, user: auth.user });
+    }
+
+    // ------------------------------------------------------------------ LOGOUT
+    if (action === 'logout' && method === 'POST') {
+      const auth = await verifyAdmin(req);
+      if (auth.ok) await logAuditEvent(auth.user.email, 'LOGOUT', 'auth', {});
+      clearSessionCookies(req, res);
+      return res.status(200).json({ success: true });
+    }
+
+    if (method !== 'POST') return res.status(405).json({ error: 'Method not allowed.' });
+
+    const body = typeof req.body === 'object' && req.body ? req.body : {};
+    if (!hasSupabaseConfig && !devMode) return notConfigured(res);
+
+    // ------------------------------------------------------------------ LOGIN
+    if (action === 'login') {
+      const email = cleanString(body.email).toLowerCase();
+      const password = typeof body.password === 'string' ? body.password : '';
+      if (!isValidEmail(email) || !password) return res.status(400).json({ error: 'Email and password are required.' });
+
+      const rlIp = await checkRateLimitShared(`login:ip:${ip}`, 10, 15 * 60 * 1000);
+      if (!rlIp.allowed) return tooMany(res, rlIp);
+      const rlEmail = await checkRateLimitShared(`login:email:${email}`, 6, 15 * 60 * 1000);
+      if (!rlEmail.allowed) return tooMany(res, rlEmail);
+
+      const human = await verifyTurnstile(body.turnstileToken, ip);
+      if (!human.ok) return res.status(400).json({ error: human.error });
+
+      if (devMode) {
+        const devPass = process.env.DEV_ADMIN_PASSWORD;
+        if (!devPass || password !== devPass || !isConfigAdminEmail(email)) return res.status(401).json({ error: GENERIC_LOGIN_ERROR });
+        setSessionCookies(req, res, { accessToken: `dev_admin_token_${email}`, expiresIn: 3600 });
+        return res.status(200).json({ success: true, user: { id: 'dev', email, role: 'admin' } });
       }
-    } catch (_) {}
-  }
 
-  let action = req.query?.action;
-  if (!action && req.url) {
-    const parts = req.url.split('?')[0].split('/');
-    action = parts[parts.length - 1];
-  }
-
-  // ============================================================================
-  // 1. ACTION: LOGIN (POST /api/auth/login)
-  // ============================================================================
-  if (action === 'login') {
-    if (req.method !== 'POST') {
-      res.setHeader('Allow', ['POST']);
-      return res.status(405).json({ error: 'Method not allowed' });
-    }
-
-    const clientIp = getClientIp(req);
-    const rateLimit = checkRateLimit(`login:${clientIp}`, 5, 15 * 60 * 1000);
-
-    if (!rateLimit.allowed) {
-      await logAuditEvent('anonymous', 'LOGIN_RATE_LIMITED', 'auth', { ip: clientIp });
-      return res.status(429).json({
-        error: `Too many login attempts. Please try again in ${rateLimit.retryAfterSec} seconds.`,
-      });
-    }
-
-    const { email, password } = req.body || {};
-    const cleanedEmail = cleanString(email).toLowerCase();
-    const rawPassword = cleanString(password);
-
-    if (!cleanedEmail || !rawPassword || !isValidEmail(cleanedEmail)) {
-      return res.status(400).json({ error: 'Invalid email or password.' });
-    }
-
-    if (hasSupabaseConfig && supabase) {
-      try {
-        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-          email: cleanedEmail,
-          password: rawPassword,
-        });
-
-        if (authError || !authData?.session) {
-          if (ADMIN_EMAILS.includes(cleanedEmail) && memoryStore.devAdminPassword && rawPassword === memoryStore.devAdminPassword) {
-            const devToken = `dev_admin_token_${cleanedEmail}`;
-            await logAuditEvent(cleanedEmail, 'DEV_LOGIN_SUCCESS', 'auth', { mode: 'fallback_after_supabase_error' });
-            return res.status(200).json({
-              success: true,
-              accessToken: devToken,
-              expiresAt: Math.floor(Date.now() / 1000) + 86400,
-              user: {
-                id: '00000000-0000-0000-0000-000000000001',
-                email: cleanedEmail,
-                role: 'admin',
-              },
-            });
-          }
-
-          await logAuditEvent(cleanedEmail, 'LOGIN_FAILED', 'auth', { reason: authError?.message || 'bad_credentials' });
-          let userFriendlyError = authError?.message || 'Invalid email or password.';
-          if (userFriendlyError.includes('Email not confirmed')) {
-            userFriendlyError = 'Email not confirmed in Supabase. Check your inbox or click "Forgot Password" to verify with OTP and reset your password.';
-          } else if (userFriendlyError.includes('Invalid path specified in request URL')) {
-            userFriendlyError = 'Invalid Supabase URL format. Please verify VITE_SUPABASE_URL in your Vercel project settings.';
-          }
-          return res.status(401).json({ error: userFriendlyError });
-        }
-
-        const user = authData.user;
-        const { data: adminRecord } = await supabase
-          .from('admin_users')
-          .select('role')
-          .eq('id', user.id)
-          .maybeSingle();
-
-        const isListedAdmin = adminRecord && ['admin', 'superadmin'].includes(adminRecord.role);
-        const isConfigAdmin = ADMIN_EMAILS.includes(cleanedEmail);
-
-        if (!isListedAdmin && !isConfigAdmin) {
-          await logAuditEvent(cleanedEmail, 'UNAUTHORIZED_ADMIN_ATTEMPT', 'auth', { userId: user.id });
-          return res.status(403).json({
-            error: 'Access denied. This account does not possess administrative privileges.',
-          });
-        }
-
-        await logAuditEvent(cleanedEmail, 'LOGIN_SUCCESS', 'auth', { userId: user.id, role: adminRecord?.role || 'admin' });
-
-        return res.status(200).json({
-          success: true,
-          accessToken: authData.session.access_token,
-          refreshToken: authData.session.refresh_token,
-          expiresAt: authData.session.expires_at,
-          user: {
-            id: user.id,
-            email: cleanedEmail,
-            role: adminRecord?.role || 'admin',
-          },
-        });
-      } catch (err) {
-        console.error('Supabase login exception:', err);
-        return res.status(500).json({ error: 'Authentication service temporarily unavailable.' });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error || !data?.session || !data?.user) {
+        await logAuditEvent(email, 'LOGIN_FAILED', 'auth', { ip_hash: hashIp(ip) });
+        return res.status(401).json({ error: GENERIC_LOGIN_ERROR });
       }
-    }
 
-    // Local Development Fallback Mode
-    if (ADMIN_EMAILS.includes(cleanedEmail)) {
-      if (memoryStore.devAdminPassword && rawPassword !== memoryStore.devAdminPassword) {
-        return res.status(401).json({ error: 'Invalid password. If you reset your password, please use the new password.' });
+      const verdict = await authorizeUser(data.user);
+      if (!verdict.ok) {
+        await logAuditEvent(email, 'LOGIN_DENIED_NOT_ADMIN', 'auth', {});
+        return res.status(403).json({ error: 'This account is not authorized as an administrator.' });
       }
-      const devToken = `dev_admin_token_${cleanedEmail}`;
-      await logAuditEvent(cleanedEmail, 'DEV_LOGIN_SUCCESS', 'auth', { mode: 'fallback' });
-      return res.status(200).json({
-        success: true,
-        accessToken: devToken,
-        expiresAt: Math.floor(Date.now() / 1000) + 86400,
-        user: {
-          id: '00000000-0000-0000-0000-000000000001',
-          email: cleanedEmail,
-          role: 'admin',
-        },
-        warning: 'Running in local fallback mode. Connect your Supabase project in production.',
+
+      setSessionCookies(req, res, {
+        accessToken: data.session.access_token,
+        refreshToken: data.session.refresh_token,
+        expiresIn: data.session.expires_in || 3600,
       });
+      await logAuditEvent(email, 'LOGIN_SUCCESS', 'auth', {});
+      return res.status(200).json({ success: true, user: { id: data.user.id, email, role: verdict.role } });
     }
 
-    return res.status(401).json({ error: 'Invalid email or password.' });
-  }
+    // ------------------------------------------------------------------ REFRESH
+    if (action === 'refresh') {
+      if (devMode) return res.status(401).json({ error: 'No refresh in dev mode.' });
+      const refreshToken = parseCookies(req)[REFRESH_COOKIE];
+      if (!refreshToken) return res.status(401).json({ error: 'Session expired. Please sign in again.' });
 
-  // ============================================================================
-  // 2. ACTION: FORGOT PASSWORD (POST /api/auth/forgot-password)
-  // ============================================================================
-  if (action === 'forgot-password') {
-    if (req.method !== 'POST') {
-      res.setHeader('Allow', ['POST']);
-      return res.status(405).json({ error: 'Method not allowed' });
-    }
+      const rl = await checkRateLimitShared(`refresh:ip:${ip}`, 30, 15 * 60 * 1000);
+      if (!rl.allowed) return tooMany(res, rl);
 
-    const clientIp = getClientIp(req);
-    const rateLimit = checkRateLimit(`forgot-pass:${clientIp}`, 5, 15 * 60 * 1000);
-    if (!rateLimit.allowed) {
-      return res.status(429).json({
-        error: `Too many password reset requests. Please wait ${rateLimit.retryAfterSec} seconds.`,
-      });
-    }
-
-    const { email } = req.body || {};
-    const cleanedEmail = cleanString(email).toLowerCase();
-
-    if (!cleanedEmail || !isValidEmail(cleanedEmail)) {
-      return res.status(400).json({ error: 'Please enter a valid administrator email address.' });
-    }
-
-    const isConfigAdmin = ADMIN_EMAILS.includes(cleanedEmail);
-    let isDbAdmin = false;
-
-    if (hasSupabaseConfig && supabase) {
-      try {
-        const { data } = await supabase
-          .from('admin_users')
-          .select('id')
-          .eq('email', cleanedEmail)
-          .maybeSingle();
-        if (data) isDbAdmin = true;
-      } catch (_) {}
-    }
-
-    if (!isConfigAdmin && !isDbAdmin) {
-      await logAuditEvent(cleanedEmail, 'FORGOT_PASSWORD_UNAUTHORIZED', 'auth', { ip: clientIp });
-      return res.status(200).json({
-        success: true,
-        message: 'If the email is registered as an administrator, a verification code has been dispatched.',
-      });
-    }
-
-    // Generate secure 6-digit OTP
-    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    memoryStore.recoveryOtps = memoryStore.recoveryOtps || {};
-    memoryStore.recoveryOtps[cleanedEmail] = {
-      otp: generatedOtp,
-      expiresAt: Date.now() + 15 * 60 * 1000,
-    };
-
-    let emailSent = false;
-    if (hasSupabaseConfig && supabase) {
-      try {
-        const { error: resetErr } = await supabase.auth.resetPasswordForEmail(cleanedEmail);
-        if (!resetErr) {
-          emailSent = true;
-        } else {
-          const { error: otpErr } = await supabase.auth.signInWithOtp({
-            email: cleanedEmail,
-            options: { shouldCreateUser: false },
-          });
-          if (!otpErr) emailSent = true;
-        }
-      } catch (err) {
-        console.warn('Supabase password reset notice:', err.message);
+      const { data, error } = await supabase.auth.refreshSession({ refresh_token: refreshToken });
+      if (error || !data?.session || !data?.user) {
+        clearSessionCookies(req, res);
+        return res.status(401).json({ error: 'Session expired. Please sign in again.' });
       }
-    }
-
-    await logAuditEvent(cleanedEmail, 'PASSWORD_RESET_OTP_GENERATED', 'auth');
-
-    const resPayload = {
-      success: true,
-      message: 'A 6-digit verification code has been sent to your administrator email inbox.',
-    };
-
-    if (!hasSupabaseConfig || !emailSent) {
-      resPayload.devOtp = generatedOtp;
-      resPayload.message += ` [Offline/Dev Code: ${generatedOtp}]`;
-    }
-
-    return res.status(200).json(resPayload);
-  }
-
-  // ============================================================================
-  // 3. ACTION: VERIFY OTP & RESET PASSWORD (POST /api/auth/verify-otp)
-  // ============================================================================
-  if (action === 'verify-otp') {
-    if (req.method !== 'POST') {
-      res.setHeader('Allow', ['POST']);
-      return res.status(405).json({ error: 'Method not allowed' });
-    }
-
-    const clientIp = getClientIp(req);
-    const rateLimit = checkRateLimit(`verify-otp:${clientIp}`, 5, 15 * 60 * 1000);
-    if (!rateLimit.allowed) {
-      return res.status(429).json({
-        error: `Too many attempts. Please try again in ${rateLimit.retryAfterSec} seconds.`,
-      });
-    }
-
-    const { email, otp, newPassword } = req.body || {};
-    const cleanedEmail = cleanString(email).toLowerCase();
-    const cleanedOtp = cleanString(otp);
-    const cleanedPassword = cleanString(newPassword);
-
-    if (!cleanedEmail || !isValidEmail(cleanedEmail)) {
-      return res.status(400).json({ error: 'Valid email address is required.' });
-    }
-    if (!cleanedOtp || cleanedOtp.length < 6) {
-      return res.status(400).json({ error: 'Please enter the 6-digit verification code.' });
-    }
-    if (!cleanedPassword || cleanedPassword.length < 8) {
-      return res.status(400).json({ error: 'New password must be at least 8 characters long.' });
-    }
-
-    const storedRecord = memoryStore.recoveryOtps?.[cleanedEmail];
-    let isOtpValid = false;
-
-    if (storedRecord && storedRecord.otp === cleanedOtp && storedRecord.expiresAt > Date.now()) {
-      isOtpValid = true;
-    }
-
-    let supabaseUserId = null;
-    let supabaseSession = null;
-    if (hasSupabaseConfig && supabase) {
-      try {
-        const { data: vData, error: vErr } = await supabase.auth.verifyOtp({
-          email: cleanedEmail,
-          token: cleanedOtp,
-          type: 'recovery',
-        });
-        if (!vErr && vData?.user) {
-          isOtpValid = true;
-          supabaseUserId = vData.user.id;
-          supabaseSession = vData.session;
-        } else {
-          const { data: evData, error: evErr } = await supabase.auth.verifyOtp({
-            email: cleanedEmail,
-            token: cleanedOtp,
-            type: 'email',
-          });
-          if (!evErr && evData?.user) {
-            isOtpValid = true;
-            supabaseUserId = evData.user.id;
-            supabaseSession = evData.session;
-          }
-        }
-      } catch (err) {
-        console.warn('Supabase verifyOtp notice:', err.message);
+      const verdict = await authorizeUser(data.user);
+      if (!verdict.ok) {
+        clearSessionCookies(req, res);
+        return res.status(403).json({ error: 'Access denied.' });
       }
-    }
-
-    if (!isOtpValid) {
-      await logAuditEvent(cleanedEmail, 'OTP_VERIFY_FAILED', 'auth', { ip: clientIp });
-      return res.status(400).json({ error: 'Invalid or expired verification code. Please request a new code.' });
-    }
-
-    // Update password in Supabase if configured
-    if (hasSupabaseConfig && supabase) {
-      try {
-        if (!supabaseUserId && supabase.auth.admin) {
-          const { data: userList } = await supabase.auth.admin.listUsers();
-          const target = userList?.users?.find((u) => u.email?.toLowerCase() === cleanedEmail);
-          if (target) supabaseUserId = target.id;
-        }
-
-        if (supabaseUserId && supabase.auth.admin) {
-          const { error: updateErr } = await supabase.auth.admin.updateUserById(supabaseUserId, {
-            password: cleanedPassword,
-            email_confirm: true, // Auto-confirm email so subsequent logins immediately succeed!
-          });
-          if (updateErr) {
-            return res.status(500).json({ error: `Could not update password: ${updateErr.message}` });
-          }
-        } else if (supabaseSession?.access_token && SUPABASE_URL && SUPABASE_ANON_KEY) {
-          // Update password using the verified session via Supabase Auth REST API (avoids AuthSessionMissingError)
-          const updateRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              apikey: SUPABASE_ANON_KEY,
-              Authorization: `Bearer ${supabaseSession.access_token}`,
-            },
-            body: JSON.stringify({ password: cleanedPassword }),
-          });
-          if (!updateRes.ok) {
-            const errData = await updateRes.json().catch(() => ({}));
-            return res.status(500).json({ error: errData.msg || errData.message || 'Failed to update password with session.' });
-          }
-        }
-        // If neither admin client nor Supabase session is present (e.g. verified via local/offline OTP),
-        // we deliberately avoid calling supabase.auth.updateUser() without a session, saving to memoryStore below instead.
-      } catch (err) {
-        console.error('Password reset update exception:', err);
-        return res.status(500).json({ error: 'Failed to update password with authentication provider.' });
-      }
-    }
-
-    memoryStore.devAdminPassword = cleanedPassword;
-    if (memoryStore.recoveryOtps) delete memoryStore.recoveryOtps[cleanedEmail];
-
-    await logAuditEvent(cleanedEmail, 'PASSWORD_RESET_SUCCESS', 'auth');
-
-    const accessToken = supabaseSession?.access_token || `dev_admin_token_${cleanedEmail}`;
-    return res.status(200).json({
-      success: true,
-      message: 'Password successfully updated! You can now access the CMS.',
-      accessToken,
-      user: {
-        id: supabaseUserId || '00000000-0000-0000-0000-000000000001',
-        email: cleanedEmail,
-        role: 'admin',
-      },
-    });
-  }
-
-  // ============================================================================
-  // 4. ACTION: SESSION (GET /api/auth/session)
-  // ============================================================================
-  if (action === 'session') {
-    if (req.method !== 'GET') {
-      res.setHeader('Allow', ['GET']);
-      return res.status(405).json({ error: 'Method not allowed' });
-    }
-
-    const auth = await verifyAdmin(req);
-    if (!auth.ok) {
-      return res.status(auth.status || 401).json({
-        authenticated: false,
-        error: auth.error,
+      setSessionCookies(req, res, {
+        accessToken: data.session.access_token,
+        refreshToken: data.session.refresh_token,
+        expiresIn: data.session.expires_in || 3600,
       });
+      return res.status(200).json({ success: true, user: { id: data.user.id, email: String(data.user.email).toLowerCase(), role: verdict.role } });
     }
 
-    return res.status(200).json({
-      authenticated: true,
-      user: auth.user,
-    });
+    // ------------------------------------------------------------------ FORGOT PASSWORD
+    if (action === 'forgot-password') {
+      const email = cleanString(body.email).toLowerCase();
+      if (!isValidEmail(email)) return res.status(400).json({ error: 'A valid email is required.' });
+
+      const rlIp = await checkRateLimitShared(`forgot:ip:${ip}`, 5, 60 * 60 * 1000);
+      if (!rlIp.allowed) return tooMany(res, rlIp);
+      const rlEmail = await checkRateLimitShared(`forgot:email:${email}`, 3, 60 * 60 * 1000);
+      if (!rlEmail.allowed) return tooMany(res, rlEmail);
+
+      const human = await verifyTurnstile(body.turnstileToken, ip);
+      if (!human.ok) return res.status(400).json({ error: human.error });
+
+      if (devMode) {
+        // Local development only: the code is printed to the SERVER console, never returned.
+        if (isConfigAdminEmail(email)) {
+          const code = String(Math.floor(100000 + Math.random() * 900000));
+          devOtps.set(email, { code, exp: Date.now() + 10 * 60 * 1000 });
+          console.info(`[dev-auth] password reset code for ${email}: ${code}`);
+        }
+        return res.status(200).json({ success: true, message: GENERIC_RESET_NOTICE });
+      }
+
+      if (await isAdminEmail(email)) {
+        let sent = false;
+        const rec = await supabase.auth.resetPasswordForEmail(email);
+        if (!rec.error) sent = true;
+        if (!sent) {
+          const otp = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+          sent = !otp.error;
+        }
+        await logAuditEvent(email, sent ? 'PASSWORD_RESET_REQUESTED' : 'PASSWORD_RESET_EMAIL_FAILED', 'auth', {});
+      }
+      // Identical answer whether or not the e-mail exists / the mail was sent.
+      return res.status(200).json({ success: true, message: GENERIC_RESET_NOTICE });
+    }
+
+    // ------------------------------------------------------------------ VERIFY OTP + NEW PASSWORD
+    if (action === 'verify-otp') {
+      const email = cleanString(body.email).toLowerCase();
+      const otp = cleanString(String(body.otp || body.token || ''));
+      const newPassword = typeof body.newPassword === 'string' ? body.newPassword : '';
+
+      if (!isValidEmail(email) || !/^\d{6,8}$/.test(otp)) return res.status(400).json({ error: 'Enter the numeric code from your email.' });
+      if (newPassword.length < MIN_PASSWORD_LENGTH || !/[A-Za-z]/.test(newPassword) || !/\d/.test(newPassword)) {
+        return res.status(400).json({ error: `New password must be at least ${MIN_PASSWORD_LENGTH} characters and include letters and numbers.` });
+      }
+
+      const rlIp = await checkRateLimitShared(`otp:ip:${ip}`, 8, 15 * 60 * 1000);
+      if (!rlIp.allowed) return tooMany(res, rlIp);
+      const rlEmail = await checkRateLimitShared(`otp:email:${email}`, 5, 15 * 60 * 1000);
+      if (!rlEmail.allowed) return tooMany(res, rlEmail);
+
+      if (devMode) {
+        const rec = devOtps.get(email);
+        if (!rec || rec.exp < Date.now() || rec.code !== otp) return res.status(400).json({ error: 'Invalid or expired code.' });
+        devOtps.delete(email);
+        memoryStore.devPasswordNote = 'Dev password reset requested; set DEV_ADMIN_PASSWORD in your env to change it.';
+        return res.status(200).json({ success: true, message: 'Dev mode: update DEV_ADMIN_PASSWORD in your local environment.' });
+      }
+
+      let verified = await supabase.auth.verifyOtp({ email, token: otp, type: 'recovery' });
+      if (verified.error || !verified.data?.user) verified = await supabase.auth.verifyOtp({ email, token: otp, type: 'email' });
+      if (verified.error || !verified.data?.user) return res.status(400).json({ error: 'Invalid or expired code.' });
+
+      const user = verified.data.user;
+      const verdict = await authorizeUser(user);
+      if (!verdict.ok) return res.status(403).json({ error: 'Access denied.' });
+
+      const upd = await supabase.auth.admin.updateUserById(user.id, { password: newPassword });
+      if (upd.error) return res.status(500).json({ error: 'Could not update the password. Please try again.' });
+
+      await logAuditEvent(email, 'PASSWORD_RESET_COMPLETED', 'auth', {});
+      const session = verified.data.session;
+      if (session) {
+        setSessionCookies(req, res, { accessToken: session.access_token, refreshToken: session.refresh_token, expiresIn: session.expires_in || 3600 });
+      }
+      return res.status(200).json({ success: true, user: { id: user.id, email, role: verdict.role }, message: 'Password updated.' });
+    }
+
+    return res.status(404).json({ error: 'Unknown auth action.' });
+  } catch (err) {
+    console.error('Auth error:', err?.message);
+    return res.status(500).json({ error: 'Authentication request failed. Please try again.' });
   }
+}
 
-  // ============================================================================
-  // 5. ACTION: LOGOUT (POST /api/auth/logout)
-  // ============================================================================
-  if (action === 'logout') {
-    if (req.method !== 'POST') {
-      res.setHeader('Allow', ['POST']);
-      return res.status(405).json({ error: 'Method not allowed' });
-    }
-
-    const token = extractBearerToken(req);
-    if (hasSupabaseConfig && supabase && token) {
-      try {
-        await supabase.auth.admin?.signOut(token);
-      } catch {}
-    }
-
-    await logAuditEvent('admin', 'LOGOUT', 'auth');
-    return res.status(200).json({ success: true, message: 'Logged out successfully.' });
-  }
-
-  return res.status(404).json({ error: `Unknown auth action: ${action}` });
+function hashIp(ip) {
+  let h = 0;
+  for (const c of String(ip)) h = (h * 31 + c.charCodeAt(0)) | 0;
+  return String(h >>> 0);
 }

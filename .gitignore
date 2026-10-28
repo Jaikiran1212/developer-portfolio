@@ -39,5 +39,6 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 .system_generated/
-.vercel
-.env*
+
+# Keep the example env file tracked
+!.env.example

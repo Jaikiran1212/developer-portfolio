@@ -1,0 +1,121 @@
+=====================================================================
+PORTFOLIO - CHANGES MADE FROM THE REVIEW (items 21 and 22 skipped as requested)
+=====================================================================
+Verified here: npm test = 33/33 pass, npm run build = OK, browser checks on
+desktop (1440px) and mobile (390px): no console errors, no sideways scroll.
+NOT verified: your real Vercel/Supabase setup (no access from here).
+
+---------------------------------------------------------------------
+YOU MUST DO THESE (cannot be done in code)
+---------------------------------------------------------------------
+ 1. Vercel -> Settings -> Environment Variables (Production AND Preview):
+    SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ADMIN_EMAILS, IP_HASH_SALT
+    (+ recommended: UPSTASH_REDIS_REST_URL/TOKEN, RESEND_API_KEY,
+    CONTACT_NOTIFY_EMAIL, CONTACT_FALLBACK_EMAIL). See .env.example.
+    ADMIN_EMAILS no longer has a built-in default.
+ 2. Supabase -> Auth -> Providers -> Email: turn OFF "Allow new users to sign up".
+ 3. Supabase -> Auth -> Email Templates: show the 6-digit code ({{ .Token }})
+    in the Reset Password / Magic Link emails (password reset asks for it).
+ 4. Supabase SQL editor: run supabase/fix-double-escape.sql ONCE (repairs
+    text already saved as &#x27; / &amp;).
+ 5. Rotate the Vercel token that was in .env.local (vercel logout / login).
+    Never zip .env.local, .vercel/ or node_modules/.
+ 6. Confirm these are your real addresses: LinkedIn / Instagram / LeetCode
+    links, the DLX repo URL (resume says sivaadhithian/..., site uses
+    Jaikiran1212/...), and the final domain (canonical/OG use
+    jaikiran-portfolio.vercel.app).
+ 7. Optional: Photo Studio -> width 520, height 620 for the larger portrait
+    (new installs get it automatically).
+ 8. You will have to sign in again once (sessions are now cookies).
+    The admin page is now /admin (not /#admin).
+
+---------------------------------------------------------------------
+STATUS OF EVERY ITEM
+---------------------------------------------------------------------
+A. SECURITY
+ 1  DONE  Fail-closed auth. No Supabase config -> 503. Dev login only with
+          ALLOW_DEV_AUTH=1 + DEV_ADMIN_PASSWORD and only outside Vercel.
+          Forged "dev_admin_token_" no longer works. Tests prove it.
+ 2  DONE  Password reset uses only Supabase's emailed code (verifyOtp);
+          local Math.random code removed; no code in any response; only
+          admins can reset; new password min 12 chars (letters + numbers).
+ 3  DONE  Shared rate limiting through Upstash Redis (falls back to
+          per-instance memory if not configured). Optional Cloudflare
+          Turnstile on contact form + login (set the 2 Turnstile keys).
+ 4  DONE  Text is stored raw and escaped only when displayed. Repair SQL included.
+B. HIGH
+ 5  DONE  Events + scroll-reveal start before the API call; 4s timeout; the
+          page paints from bundled data and only re-renders sections that changed.
+ 6  DONE  DB failure now returns an error + your fallback email (never fake
+          success). New messages notify you by Resend email and/or Telegram.
+ 7  DONE  SVG icons checked on the server and sanitised in the browser
+          (DOMPurify, loaded only when needed); every URL field validated
+          (http/https/mailto/tel); CSP no longer allows inline scripts;
+          session token moved from sessionStorage to HttpOnly cookies.
+ 8  PARTLY Photo/logo settings are allow-listed, clamped and size-capped
+          (inline images max ~150 KB). Uploading to Supabase Storage was not
+          added: host the image and paste its URL.
+ 9  DONE  Silent session refresh on 401 (/api/auth/refresh).
+10  DONE  ADMIN_EMAILS must come from env; email must be confirmed; IP salt
+          from env. (Disabling sign-ups = your step 2.)
+11  DONE  .gitignore fixed (.env.example stays tracked). Zip excludes secrets.
+C. UI / UX
+12  DONE  Desktop nav is always a dark glass pill ("About me" readable).
+13  DONE  Cutout shoulders fade into the dark (no hard vertical edges).
+14  DONE  Larger portrait sized from viewport height.
+15  DONE  Name gradient navy -> cyan -> violet.
+16  DONE  Bigger role line.
+17  DONE  Mobile: portrait lifted so the head isn't lost in black space.
+18  DONE  Mobile: flat top edge removed (transparent padding added to photo).
+19  DONE  Mobile role text is white.
+20  DONE  Mobile social buttons 40px with a 48px touch area.
+21  SKIPPED (as requested)
+22  SKIPPED (as requested)
+23  DONE  28 hover rules wrapped in @media (hover: hover).
+24  DONE  Added 480px, landscape-phone and 1440px+ layouts; 100svh.
+25  DONE  Text floor 13px; "IAM (Identity & Access Management)" -> "IAM".
+26  DONE  Skills icons centred.
+27  DONE  Theme remembered (localStorage), follows OS dark mode if never
+          chosen, button has a label/tooltip.
+28  DONE  No Admin links on the public page; CMS is a separate /admin page
+          (noindex, no-store).
+29  DONE  Inline field errors, success/error status area, character counter,
+          maxlength, "reply within 24-48h" note.
+30  DONE  "Download PDF" button for Google Drive certificate links.
+31  PARTLY Added honest "virtual job simulations" note, a "more projects on
+          GitHub" note, and used your DLX banner. No metrics were invented -
+          add real numbers/screenshots in Admin -> Projects.
+32  DONE  Typing line hidden from screen readers; one static sentence instead.
+33  DONE  Case-study dialog: focus trap, Esc, scroll lock, focus restored,
+          background inert.
+34  DONE  Reduced-motion now also stops the typewriter, heading decode,
+          confetti, click ripple, particles and parallax.
+D. PERFORMANCE
+35  DONE  CMS split out. Public JS 113 KB (31 KB gzip) -> 65 KB (23 KB gzip).
+36  DONE  Only the default font pair loads; other presets load on demand.
+37  DONE  Hero image 264 KB PNG -> 21 KB WebP (PNG kept as fallback); DLX banner
+          1.7 MB -> 75 KB WebP; unused portrait.png removed; fetchpriority + preload.
+38  DONE  Particles: fewer on phones, ~30fps on phones, paused when no dark
+          section is on screen; mouse handling uses requestAnimationFrame.
+39  DONE  Single render (see 5).
+E. SEO
+40  DONE  sitemap = root URL only; robots disallows /admin.
+41  DONE  1200x630 social card (og-card.png) + size/alt tags.
+42  CORRECTION  "Cloud Firestore" is kept: your CampusWatch project uses it.
+          (My report wrongly called it unused.) Profile links: see your step 6.
+43  DONE  Content is pre-rendered into the HTML at build time (projects, skills,
+          timeline, bio) + <noscript> fallback.
+44  YOU    Domain decision.
+F. CODE
+45  DONE  Null-safe rendering; each section isolated in try/catch.
+46  DONE  Photo number settings accept 0.
+47  DONE  One data file: data/portfolio.json. memory store reads it; seed.sql
+          is generated (npm run seed:gen). NOTE: the generated seed deletes and
+          re-inserts experience/skills/social rows - don't re-run it on a live
+          database you've edited.
+48  DONE  Old single-file HTML, root photo duplicates, node_modules, dist,
+          .env.local and .vercel are not in the delivered zip.
+49  DONE  33 tests (security + double-escape + SVG/URL validation) and an
+          optional browser smoke test (npm run smoke, needs playwright).
+50  DONE  "engines": node >=20; CSP trimmed (no jsDelivr/Iconify; added
+          object-src, base-uri, form-action); HSTS added. DLX URL = your step 6.

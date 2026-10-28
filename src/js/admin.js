@@ -3,6 +3,7 @@
 // Full-featured Content Management System with Supabase Auth integration
 // ==============================================================================
 import { apiClient } from './api-client.js';
+import { mountTurnstile } from './turnstile.js';
 import { ICONS, SOCIAL_ICONS, DEFAULT_PORTFOLIO_DATA } from './data-default.js';
 import { esc, FONT_PRESETS } from './portfolio.js';
 import { LOGO_PRESETS, getLogoSvg, syncBrowserFavicon, renderBrandLogo } from './brand-logo.js';
@@ -18,23 +19,10 @@ export class AdminCMS {
   }
 
   init() {
-    window.addEventListener('hashchange', () => this.handleRouting());
-    this.handleRouting();
-  }
-
-  async handleRouting() {
-    const isAdminRoute = window.location.hash === '#admin';
-    const admEl = $('#adm');
-    const pubEl = $('#pub');
-
-    if (!admEl || !pubEl) return;
-
-    admEl.style.display = isAdminRoute ? 'block' : 'none';
-    pubEl.classList.toggle('hp', isAdminRoute);
-
-    if (isAdminRoute) {
-      await this.checkAuthAndRender();
-    }
+    // The CMS lives on its own page (/admin), so it is never shipped to public visitors.
+    const adm = $('#adm');
+    if (adm) adm.style.display = 'block';
+    return this.checkAuthAndRender();
   }
 
   showToast(message, isError = false) {
@@ -83,7 +71,7 @@ export class AdminCMS {
 
           <form id="cms-login-form">
             <label for="admin-email">Administrator Email</label>
-            <input id="admin-email" name="email" type="email" placeholder="jaikiranjp@gmail.com" value="jaikiranjp@gmail.com" required autofocus>
+            <input id="admin-email" name="email" type="email" placeholder="your admin email" required autofocus autocomplete="username">
 
             <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;margin-bottom:6px">
               <label for="admin-pass" style="margin:0">Password</label>
@@ -98,12 +86,12 @@ export class AdminCMS {
             </button>
 
             <div style="margin-top:16px;text-align:center">
-              <a href="#" class="btn" style="width:100%">Return to Portfolio</a>
+              <a href="/" class="btn" style="width:100%">Return to Portfolio</a>
             </div>
           </form>
 
           <div style="margin-top:22px;border-top:1px solid #1e293b;padding-top:16px;font-size:0.78rem;color:#94a3b8;line-height:1.5">
-            <b>Security Note:</b> Authentication is governed by Supabase Auth with server-side authorization and rate limiting. Default administrator: <code>jaikiranjp@gmail.com</code>.
+            <b>Security Note:</b> Authentication is governed by Supabase Auth with server-side authorization and rate limiting.
           </div>
         </div>
       </div>
@@ -112,10 +100,18 @@ export class AdminCMS {
     const forgotBtn = $('#cms-forgot-link');
     if (forgotBtn) {
       forgotBtn.onclick = () => {
-        const email = $('#admin-email')?.value?.trim() || 'jaikiranjp@gmail.com';
+        const email = $('#admin-email')?.value?.trim() || '';
         this.renderForgotPasswordForm(email);
       };
     }
+
+    // Optional bot protection (only active when VITE_TURNSTILE_SITE_KEY is configured)
+    let ts = { getToken: () => '', reset() {} };
+    const loginForm = $('#cms-login-form');
+    const tsBox = document.createElement('div');
+    tsBox.style.margin = '10px 0';
+    loginForm.querySelector('button[type="submit"]')?.before(tsBox);
+    mountTurnstile(tsBox).then((t) => (ts = t));
 
     $('#cms-login-form').onsubmit = async (ev) => {
       ev.preventDefault();
@@ -128,7 +124,7 @@ export class AdminCMS {
         btn.disabled = true;
         btn.textContent = 'Verifying...';
 
-        const res = await apiClient.login(email, password);
+        const res = await apiClient.login(email, password, ts.getToken());
         this.currentUser = res.user;
         this.showToast('Signed in successfully.');
         await this.renderCMS();
@@ -141,7 +137,7 @@ export class AdminCMS {
     };
   }
 
-  renderForgotPasswordForm(email = 'jaikiranjp@gmail.com', step = 1, devOtp = '', alertMsg = '', isError = false) {
+  renderForgotPasswordForm(email = '', step = 1, devOtp = '', alertMsg = '', isError = false) {
     const adm = $('#adm');
 
     adm.innerHTML = `
@@ -170,7 +166,7 @@ export class AdminCMS {
               ? `
               <form id="cms-forgot-step1-form">
                 <label for="reset-email">Administrator Email</label>
-                <input id="reset-email" name="email" type="email" value="${esc(email)}" placeholder="jaikiranjp@gmail.com" required autofocus>
+                <input id="reset-email" name="email" type="email" value="${esc(email)}" placeholder="your admin email" required autofocus>
 
                 <button type="submit" class="btn primary" style="width:100%;margin-top:14px">
                   Send Verification Code (OTP)
@@ -290,8 +286,7 @@ export class AdminCMS {
             btn.textContent = 'Verifying & Updating...';
 
             const res = await apiClient.verifyOtpAndResetPassword(email, otp, p1);
-            if (res.accessToken) {
-              apiClient.setToken(res.accessToken);
+            if (res.user) {
               this.currentUser = res.user;
               this.showToast('Password updated! Signed in successfully.');
               await this.renderCMS();
@@ -351,8 +346,7 @@ export class AdminCMS {
     $('#cms-logout').onclick = async () => {
       await apiClient.logout();
       this.currentUser = null;
-      window.location.hash = '';
-      this.showToast('Logged out.');
+      window.location.href = '/';
     };
 
     const bodyEl = $('#cms-body');

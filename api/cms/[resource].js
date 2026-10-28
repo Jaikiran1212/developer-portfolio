@@ -8,6 +8,7 @@
 import { verifyAdmin, logAuditEvent } from '../_lib/auth.js';
 import { supabase, hasSupabaseConfig, memoryStore } from '../_lib/supabase.js';
 import { cleanString, sanitizeText, isValidEmail, isValidUrl } from '../_lib/validator.js';
+import { validateCmsBody } from '../_lib/cms-validate.js';
 
 export default async function handler(req, res) {
   // Enforce admin authentication on all CMS endpoints
@@ -36,6 +37,10 @@ export default async function handler(req, res) {
   }
 
   const { method } = req;
+
+  // Reject unsafe URLs / SVG / out-of-range settings before touching any data
+  const bodyError = validateCmsBody(resource, method, req.body);
+  if (bodyError) return res.status(400).json({ error: bodyError });
 
   // ============================================================================
   // 1. DASHBOARD (/api/cms/dashboard)
@@ -482,12 +487,9 @@ export default async function handler(req, res) {
         resume_url: cleanString(body.resume_url || body.resume || ''),
         font_preset: cleanString(body.font_preset || body.font || 'Cyber Geometric'),
         theme: cleanString(body.theme || 'Alternating Contrast'),
-        photo_config: typeof body.photo_config === 'object' && body.photo_config !== null
-          ? body.photo_config
-          : memoryStore.profile.photo_config,
-        logo_config: typeof body.logo_config === 'object' && body.logo_config !== null
-          ? body.logo_config
-          : (memoryStore.profile.logo_config || { preset: 'hex-ribbon' }),
+        // Only touch photo/logo settings when they were sent (and validated); never reset them to seed data.
+        ...(body.photo_config ? { photo_config: body.photo_config } : {}),
+        ...(body.logo_config ? { logo_config: body.logo_config } : {}),
         updated_at: new Date().toISOString(),
       };
 

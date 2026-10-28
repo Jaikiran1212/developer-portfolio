@@ -32,6 +32,7 @@ export default async function handler(req, res) {
       if (pErr || prErr || expErr || skErr || socErr) {
         console.error('Supabase query error:', { pErr, prErr, expErr, skErr, socErr });
         // Fall back gracefully to memory store if query failed
+        res.setHeader('Cache-Control', 'no-store'); // never cache fallback/seed data
         return res.status(200).json({
           profile: memoryStore.profile,
           projects: memoryStore.projects.filter((p) => p.published),
@@ -52,6 +53,7 @@ export default async function handler(req, res) {
       });
     } catch (err) {
       console.error('Portfolio handler exception:', err);
+      res.setHeader('Cache-Control', 'no-store'); // never cache fallback/seed data
       return res.status(200).json({
         profile: memoryStore.profile,
         projects: memoryStore.projects.filter((p) => p.published),
@@ -64,6 +66,7 @@ export default async function handler(req, res) {
   }
 
   // Fallback mode for local dev or offline
+  res.setHeader('Cache-Control', 'no-store'); // never cache fallback/seed data
   return res.status(200).json({
     profile: memoryStore.profile,
     projects: memoryStore.projects.filter((p) => p.published),

@@ -1,9 +1,11 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
+import prerender from './scripts/vite-prerender.js';
 
 export default defineConfig({
   root: '.',
   publicDir: 'public',
+  plugins: [prerender()],
   build: {
     outDir: 'dist',
     emptyOutDir: true,
@@ -12,6 +14,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
+        admin: resolve(__dirname, 'admin.html'),
       },
     },
   },
