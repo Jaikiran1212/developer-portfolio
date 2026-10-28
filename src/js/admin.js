@@ -1401,8 +1401,9 @@ export class AdminCMS {
       };
 
       try {
-        await apiClient.updateProfile(payload);
-        this.showToast('Profile and Brand Logo updated successfully.');
+        const saved = await apiClient.updateProfile(payload);
+        if (saved?.warning) this.showToast(saved.warning, true);
+        else this.showToast('Profile and Brand Logo updated successfully.');
         await this.app.init();
       } catch (err) {
         this.showToast(err.message, true);

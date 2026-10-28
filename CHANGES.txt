@@ -119,3 +119,14 @@ F. CODE
           optional browser smoke test (npm run smoke, needs playwright).
 50  DONE  "engines": node >=20; CSP trimmed (no jsDelivr/Iconify; added
           object-src, base-uri, form-action); HSTS added. DLX URL = your step 6.
+
+---------------------------------------------------------------------
+FOLLOW-UP FIX: "Could not find the 'logo_config' column of 'profile'"
+---------------------------------------------------------------------
+Cause: the original database schema never created profile.logo_config, but the
+admin Brand Logo section saves into it.
+ * RUN ONCE in the Supabase SQL editor: supabase/migrations/001_add_logo_config.sql
+   (adds the column and refreshes Supabase's schema cache).
+ * supabase/schema.sql now creates the column for new installs.
+ * The API now saves the rest of your profile even if the column is missing and
+   shows a clear warning instead of failing the whole save.

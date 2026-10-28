@@ -494,10 +494,17 @@ export default async function handler(req, res) {
       };
 
       if (hasSupabaseConfig && supabase) {
-        const { data, error } = await supabase.from('profile').upsert({ id: 1, ...updates }).select().single();
+        let { data, error } = await supabase.from('profile').upsert({ id: 1, ...updates }).select().single();
+        let warning;
+        // Older databases may not have the logo_config column yet: save everything else and say what to run.
+        if (error && /logo_config/.test(error.message) && updates.logo_config) {
+          const { logo_config: _skipped, ...withoutLogo } = updates;
+          ({ data, error } = await supabase.from('profile').upsert({ id: 1, ...withoutLogo }).select().single());
+          warning = 'Profile saved, but the brand logo was NOT saved: run supabase/migrations/001_add_logo_config.sql in the Supabase SQL editor once.';
+        }
         if (error) return res.status(500).json({ error: error.message });
         await logAuditEvent(auth.user.email, 'PROFILE_UPDATED', 'profile');
-        return res.status(200).json({ success: true, profile: data });
+        return res.status(200).json({ success: true, profile: data, ...(warning ? { warning } : {}) });
       }
 
       memoryStore.profile = { ...memoryStore.profile, ...updates };

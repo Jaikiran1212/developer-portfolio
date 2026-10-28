@@ -56,8 +56,11 @@ CREATE TABLE IF NOT EXISTS public.profile (
       "autoCutout": true,
       "cutoutTolerance": 38
     }'::jsonb,
+    logo_config JSONB NOT NULL DEFAULT '{"preset":"hex-ribbon","custom_url":"","primary_color":"#22d3ee","secondary_color":"#8b5cf6"}'::jsonb,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
+-- Existing databases created before this column existed: see supabase/migrations/001_add_logo_config.sql
+ALTER TABLE public.profile ADD COLUMN IF NOT EXISTS logo_config JSONB NOT NULL DEFAULT '{"preset":"hex-ribbon","custom_url":"","primary_color":"#22d3ee","secondary_color":"#8b5cf6"}'::jsonb;
 
 -- 4. PROJECTS TABLE
 CREATE TABLE IF NOT EXISTS public.projects (
